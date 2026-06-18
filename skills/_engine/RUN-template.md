@@ -42,5 +42,8 @@ Tried:
 Next:
 Blockers:
 
+## Cicatrices
+<!-- lecons du run (volatiles -> a l'HYPOTHESE) ; promouvoir en check: ou en memoire quand durables (ENGINE ch.3) -->
+
 ## Checks
 <!-- lecons promues en code, EXECUTEES par le gate a chaque cloture : check: <commande exit!=0 = bloque> -->

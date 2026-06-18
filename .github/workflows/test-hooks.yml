@@ -1,0 +1,13 @@
+name: test-hooks
+# Self-teste la couche d'autorite de cloture (les hooks) a chaque push/PR : PARSE/FIRE/SILENT par hook.
+# Le kit preche la verification hors-modele -> il l'applique a ses PROPRES gardes (un fail-open silencieux
+# fait echouer le build). exit != 0 de test-hooks.ps1 = build rouge.
+on: [push, pull_request]
+jobs:
+  test-hooks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test des hooks (PARSE/FIRE/SILENT)
+        shell: pwsh
+        run: powershell -NoProfile -File hooks/test-hooks.ps1

@@ -29,7 +29,7 @@ description: >-
 # Scout — surfacing actionable improvement candidates
 
 > **Shared engine**: the candidate-pool mechanics (parallel lens fan-out, loop-until-dry, dedup by core
-> idea, the two orthogonal /100 scores, and the auto-resolve vs. surface gate) are defined canonically in
+> idea, the candidate scoring (impact × autonomy-confidence, surfaced as a coarse band), and the auto-resolve vs. surface gate) are defined canonically in
 > `~/.claude/skills/_engine/ENGINE.md` (Chapter 1 — GENERATE & GATE). On any divergence, the engine wins.
 > **Summary**: fan out 1 agent per lens in ONE message → each returns scored JSON candidates (`gg-1`) →
 > dedup by core idea → loop-until-dry (stop after 2 dry rounds or ~12 candidates) → rank the survivors.
@@ -50,7 +50,7 @@ Triggered when the question is **"how do I make X work despite the blocker Y"** 
 stopped by a constraint), NOT "what to improve". Here the candidate is a **solution-approach**, not an
 improvement. Three obligations, in order:
 
-1. **RESEARCH ARM FIRST (non-negotiable — operationalizes ENGINE socle §3 + Ch.4 "research before coding").**
+1. **RESEARCH ARM FIRST (non-negotiable — operationalizes ENGINE socle §3 + Ch.4 BUILD, bloc "Debugging systématique" : recherche prior-art AVANT de coder).**
    Fan out research agents IN PARALLEL (prior-art: official docs, GitHub/forum issues, web) to establish:
    is the blocker a DOCUMENTED platform limit? what techniques do others use? **Never declare "impossible /
    intrinsic" without a CITED source** — that exact false-conclusion (a documented limit re-discovered by

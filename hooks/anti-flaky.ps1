@@ -28,7 +28,11 @@ $patterns = @(
     'Start-Sleep\s+([2-9]\b|\d{2,})',
     'Start-Sleep\s+-Milliseconds\s+\d{4,}',
     'Thread\.Sleep\(\s*\d{4,}',
-    'Task\.Delay\(\s*\d{4,}'
+    'Task\.Delay\(\s*\d{4,}',
+    '\bsleep\s+([2-9]\b|\d{2,})',
+    '\]?::Sleep\(\s*\d{4,}',
+    '(time|asyncio)\.sleep\(\s*([2-9]|\d{2,})',
+    'setTimeout\([^,]+,\s*\d{4,}'
 )
 
 $offenders = @()

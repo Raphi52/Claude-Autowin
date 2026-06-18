@@ -13,9 +13,10 @@ try {
     $ext = [System.IO.Path]::GetExtension($fp).ToLower()
     if (@('.ps1', '.psm1', '.cs', '.py', '.ts', '.js', '.xaml') -notcontains $ext) { exit 0 }
 
-    $content = [IO.File]::ReadAllText($fp)
+    # fix #12 (failles scout 2026-06-18) : hash sur les BYTES bruts (pas ReadAllText -> UTF8.GetBytes, qui
+    # depend de l'encodage systeme) -> identite stable cross-encodage/outil pour les fichiers code non-ASCII.
     $sha = [Security.Cryptography.SHA1]::Create()
-    $hash = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($content))).Replace('-', '')
+    $hash = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($fp))).Replace('-', '')
 
     # Historique des hashes par fichier (chronologique) pour cette session.
     $store = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-kaizen-revert-$sid.jsonl")

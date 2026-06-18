@@ -33,7 +33,7 @@ if (-not (@('.ps1', '.psm1', '.cs', '.py', '.ts', '.js', '.xaml') -contains $ext
 # Echappe explicite sur le diff (comme sleep-ok:)
 $text = [string]$j.tool_input.content
 if (-not $text) { $text = [string]$j.tool_input.new_string }
-if ($text -match 'fix-ok:') { exit 0 }
+if ($text -match 'fix-ok:\s*\S') { exit 0 }   # fix (failles scout 2026-06-18) : exige une justif NON VIDE (un '# fix-ok:' nu ne desarme plus)
 
 $sid = [string]$j.session_id
 if (-not $sid) { $sid = 'nosession' }
@@ -47,8 +47,9 @@ $cwd = [string]$j.cwd
 $roots = @()
 if ($cwd -and (Test-Path $cwd)) { $roots += (Join-Path $cwd "Audit\workspaces\$sid") }
 $roots += (Join-Path $PWD "Audit\workspaces\$sid")
-$roots += "Audit\workspaces\$sid"
-# Dedupe (conserve l'ordre : cwd > $PWD > hardcoded)
+# fix (failles scout 2026-06-18) : root machine-specifique 'C:\Code RIG\...' RETIRE (survivait casse a la
+# portabilisation -> resolvait faux hors machine auteur ; relatif joint a $PWD, pas au cwd du harnais).
+# Dedupe (conserve l'ordre : cwd > $PWD)
 $roots = $roots | Select-Object -Unique
 $disciplined = $false
 $greenForFile = $false
@@ -61,7 +62,9 @@ foreach ($r in $roots) {
         if (-not $c) { continue }
         $globalOff = ($c -match '(?im)fix-gate:\s*off')
         $hasCause = ($c -match '(?im)^\s*CausalHypothesis:' -or $c -match '(?im)^\s*check:\s*\S')
-        $namesFile = ($base -and ($c -match [regex]::Escape($base)))
+        # fix (failles scout 2026-06-18) : le fichier doit etre nomme sur une LIGNE-TOKEN (CausalHypothesis/
+        # check/fix-file), pas n'importe ou en prose -> une mention de passage dans le Journal ne desarme plus.
+        $namesFile = ($base -and ($c -match ('(?im)^\s*(CausalHypothesis|check|fix-file)\b[^\r\n]*' + [regex]::Escape($base))))
         if ($globalOff -or ($hasCause -and $namesFile)) { $disciplined = $true }
         # v2.1 (fix #3) : un green nommant le fichier solde la dette UNE FOIS par TRANSITION (pas a chaque edit).
         # Signature de transition = nb de lignes GATE-VERIFIED (monotone : stop-gate en ajoute une par green verifie).

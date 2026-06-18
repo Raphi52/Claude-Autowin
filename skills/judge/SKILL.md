@@ -2,7 +2,7 @@
 name: judge
 description: >-
   Step 4 — the FINAL step of the pipeline (frame → terrain → build → judge). ADVERSARIAL, EXTERNAL
-  review of a deliverable Claude produced, scored /100 per dimension and LOOPED to the regime threshold.
+  review of a deliverable Claude produced, scored per dimension (surfaced as a verdict band, not false-precision digits) and LOOPED to the regime threshold.
   A panel of independent specialist-judges — each an EXTERNAL subagent (separate from the producer) but
   INFORMED of the need, the deliberate decisions, and the defect ledger — scores the work, lists defects
   WITH PROOF, and SENDS them back to the producer to fix, in a loop. The judge NEVER repairs what it
@@ -103,9 +103,9 @@ into opportunistic refactors — gate them here.
 
 Before trusting a critical-panel green: inject ONE planted defect into a **copy** and run the panel on that
 copy first. The defect must be REALISTIC, not trivially-syntactic — a broken brace any Corrector catches
-measures nothing (**recipes by nature: ENGINE ch.2** — the plant-recipes per kind live there, canonical). No judge
+measures nothing. **Plant-recipes by nature (inline)**: code → invert a condition / off-by-one; doc → a plausible-but-false claim; script → a broken idempotency or wrong exit code; skill → a wrong trigger phrase; UI → a silent no-op binding. No judge
 flags it → the ensemble is **blind today** → every green of that panel is downgraded to non-conclusive
-(INVALID) → **FORCED re-escalation**: bump one regime (standard→critical) and re-run, or human hard-stop if already critical — never just log and proceed. Log `CANARY-BLIND`. This measures judge correlation instead of assuming it away. (disposable → NO canary = an **assumed blind spot**, stated as such.) **Thresholds, plant-recipes-by-nature, and the exact standard-sampling sub-conditions are CANONICAL in ENGINE Ch.2** — single source; don't re-spell the values here (judge keeps only the operating gist above).
+(INVALID) → **FORCED re-escalation**: bump one regime (standard→critical) and re-run, or human hard-stop if already critical — never just log and proceed. Log `CANARY-BLIND`. This measures judge correlation instead of assuming it away. (disposable → NO canary = an **assumed blind spot**, stated as such.) **Thresholds and the exact standard-sampling sub-conditions are CANONICAL in ENGINE Ch.2** — single source; don't re-spell the values here (judge keeps the plant-recipes inline above + the operating gist).
 
 ## Launching judges
 

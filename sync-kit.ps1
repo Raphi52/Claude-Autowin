@@ -5,6 +5,8 @@
 #   - CONSTITUTION.md = CLAUDE.md SANS la section "## Local (this machine)" -> sync partiel a la main.
 #   - hooks/settings-snippet.json vs ~/.claude/settings.json -> a reconcilier a la main.
 #   - skills/_pipeline-audit/ = historique machine (LEDGER), pas distribue.
+#   - memory/ = sous-ensemble CURE A LA MAIN (starter kit-generique) -> peut deriver des fiches live ;
+#       rafraichir manuellement (pas dans $files). Les fiches CARDINALES vivent dans CONSTITUTION.md, pas ici.
 # Usage : .\sync-kit.ps1            (propage) ; .\sync-kit.ps1 -Check   (diff seulement, n'ecrit rien)
 param([switch]$Check)
 $ErrorActionPreference = 'Stop'

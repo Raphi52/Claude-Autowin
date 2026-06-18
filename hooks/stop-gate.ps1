@@ -29,14 +29,21 @@
 # le residuel est alors VISIBLE via artifact_based cote review, jamais masque.
 
 $ErrorActionPreference = 'SilentlyContinue'
-try { $j = [Console]::In.ReadToEnd() | ConvertFrom-Json } catch { exit 0 }
-if ($null -eq $j) { exit 0 }
+$raw = ''
+try { $raw = [Console]::In.ReadToEnd() } catch { $raw = '' }
+try { $j = $raw | ConvertFrom-Json } catch { $j = $null }
+# fix #8 (failles scout 2026-06-18) : l'AUTORITE de cloture ne fail-OPEN pas sur un stdin illisible.
+# Un payload NON VIDE illisible -> fail-CLOSED (block). stdin vide = pas un vrai event -> exit 0.
+if ($null -eq $j) {
+    if ($raw.Trim()) { @{ decision = 'block'; reason = 'STOP-GATE : stdin illisible (JSON malforme) -- fail-closed (l autorite de cloture ne se desarme pas sur une entree corrompue).' } | ConvertTo-Json -Compress }
+    exit 0
+}
 if ($j.stop_hook_active) { exit 0 }
 
 $cwd = [string]$j.cwd
 if (-not $cwd -or -not (Test-Path $cwd)) { exit 0 }
 
-$replayWhitelist = @('dotnet test', 'dotnet build', 'cmd /c', 'powershell -NoProfile -File', 'powershell -File')
+$replayWhitelist = @('dotnet test', 'dotnet build', 'cmd /c', 'powershell -NoProfile -File', 'powershell -File', 'pwsh -NoProfile -File', 'pwsh -File')
 
 # v3.1 : plafond d'execution des rejeux/checks — un signal-cmd qui pend ne doit pas geler la session
 $replayTimeoutMs = 120000
@@ -74,7 +81,7 @@ $bad = @()
 foreach ($d in $wsDirs) {
     $run = Join-Path $d.FullName 'RUN.md'
     if (-not (Test-Path $run)) { continue }
-    $all = @(Get-Content $run -ErrorAction SilentlyContinue)
+    $all = @(Get-Content $run -Encoding UTF8 -ErrorAction SilentlyContinue)
     if (-not $all) { continue }
     $head = $all | Select-Object -First 14
     if (($head | Where-Object { $_ -match '^\s*gate:\s*off\s*$' })) { continue }
@@ -116,8 +123,14 @@ foreach ($d in $wsDirs) {
         $cmdLine = $head | Where-Object { $_ -match '^\s*signal-cmd:' } | Select-Object -First 1
         if ($cmdLine) {
             $cmd = ($cmdLine -replace '^\s*signal-cmd:\s*', '').Trim()
+            # fix #1 (failles scout 2026-06-18) : un signal-cmd VACANT (cmd /c exit 0, echo, rem, ver, cd...)
+            # passe la whitelist mais ne PROUVE rien -> auto-certification du green. On le refuse (non-disposable).
+            $eff = $cmd -replace '^(?i)\s*cmd\s+/c\s+', ''
+            if ($eff -match '^(?i)\s*(exit(\s+/b)?(\s+\d+)?|echo(\s|$)|rem(\s|$)|ver\s*$|cd\s*$|true\s*$|:|type\s+nul)') {
+                $failures += ('signal-cmd VACANT (ne prouve rien) : ' + $cmd + ' -- un signal doit etre un build/test/script reel')
+            }
             $white = $false
-            foreach ($p in $replayWhitelist) { if ($cmd.StartsWith($p)) { $white = $true; break } }
+            foreach ($p in $replayWhitelist) { if ($cmd.StartsWith($p, [System.StringComparison]::OrdinalIgnoreCase)) { $white = $true; break } }
             if ($white) {
                 $rc = Invoke-GateCmd $cmd
                 if ($rc -ne 0) {
@@ -161,7 +174,7 @@ foreach ($d in $wsDirs) {
     if ($regime -eq 'critical') {
         $cmdL2 = $head | Where-Object { $_ -match '^\s*signal-cmd:' } | Select-Object -First 1
         $cmdWhite = $false
-        if ($cmdL2) { $cc2 = ($cmdL2 -replace '^\s*signal-cmd:\s*', '').Trim(); foreach ($pp in $replayWhitelist) { if ($cc2.StartsWith($pp)) { $cmdWhite = $true; break } } }
+        if ($cmdL2) { $cc2 = ($cmdL2 -replace '^\s*signal-cmd:\s*', '').Trim(); foreach ($pp in $replayWhitelist) { if ($cc2.StartsWith($pp, [System.StringComparison]::OrdinalIgnoreCase)) { $cmdWhite = $true; break } } }
         $hasAttest = [bool]($head | Where-Object { $_ -match '^\s*signal-attestable:\s*\S' })
         if (-not ($cmdWhite -or ($checkLines.Count -gt 0) -or $hasAttest)) {
             $failures += 'CRITICAL sans preuve hors-modele (signal-cmd whiteliste, check:, ou signal-attestable: requis)'
