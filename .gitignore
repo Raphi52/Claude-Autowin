@@ -6,3 +6,10 @@ desktop.ini
 # Editor
 *.swp
 *~
+
+# Redondant / runtime (les fiches memory/*.md sont la source ; pas de zip ni d'artefacts de run au repo)
+*.zip
+Audit/
+gate-counters.jsonl
+kaizen-treated.jsonl
+node_modules/

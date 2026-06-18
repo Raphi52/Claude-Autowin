@@ -25,7 +25,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
    any machine-only `## Local` section UNTOUCHED.
 4. **Hooks wiring** — make the `hooks` block in `settings.json` match `hooks\settings-snippet.json`. If the
    entries already exist, leave them; **never duplicate**. Validate the JSON parses.
-5. **What's new in 3.4.0 — apply if missing**:
+5. **What's new in 3.5.0** — durcissement sécurité + hooks (RCE-by-clone fermé, allowlist de preuve, anti-flaky étendu, fail-closed, CI, LICENSE) → détail dans [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
    - **`fixer` skill** — the producer's named fix loop (reproduce → localize → fix → verify red→green → guard
      → loop back to judge). Copy `skills\fixer` (Step 1).
    - **`kaizen` skill** — improve the kit from its OWN failures: locate a failed session / recurrent pattern →

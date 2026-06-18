@@ -1,4 +1,4 @@
-# Memory index — STARTER kit-generic (à fusionner, voir README-INSTALLATION § « Shared memories »)
+# Memory index — STARTER kit-generic (à fusionner, voir README-INSTALLATION § « Step 10 — Starter memories »)
 
 > Sous-ensemble PARTAGEABLE des fiches mémoire : uniquement le **kit-générique** (mécanique des hooks/RUN.md,
 > workflow, préférences). **Les réflexes cardinaux NE sont PAS ici** — ils vivent déjà dans `CONSTITUTION.md`.

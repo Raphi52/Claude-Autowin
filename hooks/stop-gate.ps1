@@ -32,10 +32,11 @@ $ErrorActionPreference = 'SilentlyContinue'
 $raw = ''
 try { $raw = [Console]::In.ReadToEnd() } catch { $raw = '' }
 try { $j = $raw | ConvertFrom-Json } catch { $j = $null }
-# fix #8 (failles scout 2026-06-18) : l'AUTORITE de cloture ne fail-OPEN pas sur un stdin illisible.
-# Un payload NON VIDE illisible -> fail-CLOSED (block). stdin vide = pas un vrai event -> exit 0.
-if ($null -eq $j) {
-    if ($raw.Trim()) { @{ decision = 'block'; reason = 'STOP-GATE : stdin illisible (JSON malforme) -- fail-closed (l autorite de cloture ne se desarme pas sur une entree corrompue).' } | ConvertTo-Json -Compress }
+# fix #8 (failles scout 2026-06-18) : l'AUTORITE de cloture ne fail-OPEN pas sur un stdin illisible OU non-objet.
+# Un payload NON VIDE qui n'est pas un objet JSON (null, scalaire 0/"x", tableau []) -> fail-CLOSED (block).
+# stdin vide = pas un vrai event -> exit 0. (Ferme le bypass : un scalaire JSON valide echappait au fail-closed.)
+if ($null -eq $j -or ($j -isnot [System.Management.Automation.PSCustomObject])) {
+    if ($raw.Trim()) { @{ decision = 'block'; reason = 'STOP-GATE : stdin illisible ou non-objet (JSON malforme/scalaire) -- fail-closed.' } | ConvertTo-Json -Compress }
     exit 0
 }
 if ($j.stop_hook_active) { exit 0 }
@@ -100,12 +101,19 @@ foreach ($d in $wsDirs) {
     if (($head | Where-Object { $_ -match '^\s*gate:\s*off\s*$' })) { continue }
     # v3.2 — n'enforce QUE les runs de CETTE session : a moi si sous Audit\workspaces\<mon id>\ OU header
     # "session: <mon id>". Sinon (autre session / legacy non-stampe) => IGNORE. Filet : pas de session_id => legacy.
+    $owned = $false
     if ($sid) {
         $underMySession = ($d.FullName -like ('*\Audit\workspaces\' + $sid + '\*'))
         $sessLine = $head | Where-Object { $_ -match '^\s*session:\s*\S' } | Select-Object -First 1
         $runSession = if ($sessLine) { ($sessLine -replace '^\s*session:\s*', '').Trim() } else { '' }
-        if (-not ($underMySession -or ($runSession -and $runSession -eq $sid))) { continue }
+        $owned = ($underMySession -or ($runSession -and $runSession -eq $sid))
+        if (-not $owned) { continue }
     }
+    # fix SECURITE (failles scout 2026-06-18, RCE-by-clone) : on n'EXECUTE (rejeu signal-cmd/check) QUE les RUN
+    # de CETTE session (owned). En legacy (sid absent) => owned=false => AUCUN rejeu : un RUN.md clone/etranger
+    # ne lance plus de commande chez la victime. Opt-in mono-poste de confiance : env AUTOWIN_TRUST_REPLAY=1.
+    # (Le blocage open/red reste actif meme non-owned : la securite de cloture n'est pas desarmee, seul le rejeu l'est.)
+    $mayReplay = ($owned -or ($env:AUTOWIN_TRUST_REPLAY -eq '1'))
     $statusLine = $head | Where-Object { $_ -match '^\s*status:' } | Select-Object -First 1
     if (-not $statusLine) { continue }
     $status = ($statusLine -replace '^\s*status:\s*', '').Trim().ToLower()
@@ -142,8 +150,8 @@ foreach ($d in $wsDirs) {
                 $failures += ('signal-cmd ne PROUVE rien (ni runner test/build ni script .ps1/.bat/.cmd/.py/.js) : ' + $cmd)
             }
             $white = $false
-            foreach ($p in $replayWhitelist) { if ($cmd.StartsWith($p, [System.StringComparison]::OrdinalIgnoreCase)) { $white = $true; break } }
-            if ($white) {
+            foreach ($p in $replayWhitelist) { if ($cmd -match ('(?i)^' + [regex]::Escape($p) + '(\s|$)')) { $white = $true; break } }   # fix (failles scout) : word-boundary -> 'dotnet testxyz' ne matche plus
+            if ($white -and $mayReplay) {
                 $rc = Invoke-GateCmd $cmd
                 if ($rc -ne 0) {
                     $tag = ''
@@ -154,15 +162,18 @@ foreach ($d in $wsDirs) {
         }
     }
 
-    # (b) CHECKS (lecons promues en code) — toujours, tous regimes
+    # (b) CHECKS (lecons promues en code) — EXECUTES seulement si rejeu autorise (fix securite : un check d'un
+    # RUN non-owned/legacy n'est PAS execute -> RCE-by-clone ferme ; la presence sert encore a (d) critical).
     $checkLines = $all | Where-Object { $_ -match '^\s*check:\s*\S' }
-    foreach ($cl in $checkLines) {
-        $c = ($cl -replace '^\s*check:\s*', '').Trim()
-        $rc = Invoke-GateCmd $c
-        if ($rc -ne 0) {
-            $tag = ''
-            if ($rc -eq 124) { $tag = ' TIMEOUT>' + $replayTimeoutMs + 'ms' }
-            $failures += ('CHECK ECHOUE (exit ' + $rc + $tag + '): ' + $c)
+    if ($mayReplay) {
+        foreach ($cl in $checkLines) {
+            $c = ($cl -replace '^\s*check:\s*', '').Trim()
+            $rc = Invoke-GateCmd $c
+            if ($rc -ne 0) {
+                $tag = ''
+                if ($rc -eq 124) { $tag = ' TIMEOUT>' + $replayTimeoutMs + 'ms' }
+                $failures += ('CHECK ECHOUE (exit ' + $rc + $tag + '): ' + $c)
+            }
         }
     }
 

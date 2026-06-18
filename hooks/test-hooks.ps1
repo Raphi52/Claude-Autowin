@@ -46,6 +46,8 @@ Remove-Item $st -EA SilentlyContinue
 # --- anti-flaky : FIRE (sleep brut PS) / FIRE (python, fix #11) / SILENT (poll court) / PARSE ---
 Check 'anti-flaky FIRE  (sleep brut PS)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Seconds 5') } })) -match 'deny')  # sleep-ok: fixture (chaine construite)
 Check '#11 anti-flaky FIRE (python time.sleep)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('time.' + 'sleep(5)') } })) -match 'deny')  # sleep-ok: fixture python construite
+Check 'REG anti-flaky FIRE (Start-Sleep float 1.5)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' 1.5') } })) -match 'deny')  # sleep-ok: fixture float construite
+Check 'REG anti-flaky FIRE (Start-Sleep paren cast)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + '([int]5)') } })) -match 'deny')  # sleep-ok: fixture paren construite
 Check 'anti-flaky SILENT(poll 200ms)' (-not ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Milliseconds 200') } })) -match 'deny'))  # sleep-ok: fixture poll
 Check 'anti-flaky PARSE (malforme)' (-not ((Run 'anti-flaky.ps1' '{{bad') -match 'deny'))
 
@@ -67,6 +69,7 @@ Check 'stop-gate SILENT(gate off)' (-not ((Run 'stop-gate.ps1' $sg) -match 'bloc
 # fix #8 (failles scout) : stdin illisible = fail-CLOSED (block) ; stdin vide = rien
 Check '#8 stop-gate BLOQUE (stdin illisible = fail-closed)' ((Run 'stop-gate.ps1' 'pas du json {{') -match 'block')
 Check '#8 stop-gate SILENT(stdin vide)' (-not ((Run 'stop-gate.ps1' '') -match 'block'))
+Check 'REG stop-gate BLOQUE (stdin scalaire JSON = fail-closed)' ((Run 'stop-gate.ps1' '0') -match 'block')
 # anti-fixation : placeholder ignore vs vraie decision bloquee
 MkRun "status: green`nsession: $sid`nregime: standard`n## Options`nDécision: <laquelle et pourquoi>"
 Check 'anti-fixation IGNORE le scaffold placeholder' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))

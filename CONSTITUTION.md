@@ -1,6 +1,8 @@
 # Constitution — cardinal reflexes (loaded into every session)
 
-> APPEND (do not replace) into `%USERPROFILE%\.claude\CLAUDE.md` — automatically loaded by Claude Code in
+> APPEND into `%USERPROFILE%\.claude\CLAUDE.md` (on a fresh install) OR REPLACE the existing
+> "Constitution — cardinal reflexes" section (never duplicate it; leave any machine-only "## Local" section
+> INTACT) — automatically loaded by Claude Code in
 > every session on this machine. Each rule is a reflex **at its decision point**: "THE MOMENT X happens → Y".
 
 ## The pipeline

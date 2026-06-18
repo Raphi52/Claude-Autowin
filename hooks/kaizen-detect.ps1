@@ -9,6 +9,10 @@ $ErrorActionPreference = 'SilentlyContinue'
 $f = Join-Path $env:USERPROFILE '.claude\gate-counters.jsonl'
 if (-not (Test-Path $f)) { '[]'; exit 0 }
 $cutoff = if ($SinceDays -gt 0) { (Get-Date).AddDays(-$SinceDays) } else { [datetime]::MinValue }
+# fix (failles scout 2026-06-18) : globs de fixtures CONFIGURABLES via env KAIZEN_FIXTURE_PATHS (separes ';')
+# au lieu de chemins machine codes en dur. Defaut = les fixtures du harnais test-hooks (sous %TEMP% depuis le
+# durcissement portable) + les legacy C:\x\ / C:\tmp\. Un autre poste met SES chemins de fixtures.
+$fixtureGlobs = if ($env:KAIZEN_FIXTURE_PATHS) { $env:KAIZEN_FIXTURE_PATHS -split ';' } else { @('C:\x\*', 'C:\tmp\*', ((Join-Path ([System.IO.Path]::GetTempPath()) 'claude-test*'))) }
 
 $rows = @()
 foreach ($line in (Get-Content $f)) {
@@ -17,7 +21,7 @@ foreach ($line in (Get-Content $f)) {
     $ts = [datetime]::MinValue; try { $ts = [datetime]$o.ts } catch { }
     if ($ts -lt $cutoff) { continue }
     if (([string]$o.session) -match '^test-') { continue }   # anti-bruit : runs de test du gate lui-même
-    if (([string]$o.file) -like 'C:\x\*' -or ([string]$o.file) -like 'C:\tmp\*') { continue }  # anti-bruit : fixtures de test (C:\x\, C:\tmp\ — harnais test-hooks)
+    $fpv = [string]$o.file; if ($fpv -and ($fixtureGlobs | Where-Object { $fpv -like $_ })) { continue }  # anti-bruit : fixtures (globs KAIZEN_FIXTURE_PATHS)
     # anti-bruit : entrees INATTRIBUABLES (ni file ni session) = ere de dev/test du gate lui-meme, pas une
     # decision reelle -> inadmissibles pour conclure a une habitude (audit kaizen 2026-06-16).
     if (-not ([string]$o.file) -and -not ([string]$o.session)) { continue }
