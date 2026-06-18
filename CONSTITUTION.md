@@ -19,9 +19,9 @@ skill BEFORE acting (don't wait for a keyword; route by task SHAPE):
 - WHAT-to-do not yet chosen on a target ("what to improve / where to start / find a task on X") → **scout**
 - request shaped as a solution ("create/add/make X"), create a doc/config, frame a need, choose an approach → **frame**
 - need framed + approach settled, about to launch an autonomous loop (observability/harness) → **terrain**
-- a bug/defect, "fix it / make it green", apply the judge's findings → **fixer**
+- a bug/defect, "fix it / make it green", apply the judge's findings → **build**
 - a substantial deliverable just produced, "is it good? / audit it / is it really done?" → **judge**
-Chain: scout → frame → terrain → build|fixer → judge.
+Chain: scout → frame → terrain → build → judge.
 EXCEPTIONS (act directly, no skill): a conversational question · a trivial fact/lookup · a throwaway
 micro-edit already precise. When unsure between trivial and substantial → treat as substantial and route
 (aggressive default). Skills compose with the 13 reflexes below — they don't replace them.

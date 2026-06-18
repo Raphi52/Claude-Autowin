@@ -1,7 +1,7 @@
 # Claude pipeline kit — workstation install (company-wide)
 
 Installs the **self-correcting work system** on this machine: **6 skills** — the pipeline (scout / frame /
-terrain / judge) + `fixer` (defect loop) + `kaizen` (improve the kit from its own failures) — + shared engine
+terrain / judge) + `build` (defect loop) + `kaizen` (improve the kit from its own failures) — + shared engine
 + a layer of **guardrail hooks** (stop-gate, anti-flaky, fix-gate, advisory-guard, kaizen system) + a
 constitution of reflexes. Designed to be deployed identically on every
 workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
@@ -15,19 +15,19 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 > The update is **version-agnostic** — it upgrades from ANY previous version. Do this, then give the recap:
 
 1. **Overwrite the kit files** with the newer ones in this folder (full-file replacements, not merges):
-   `skills\scout|frame|terrain|judge|fixer|kaizen|_engine` , ALL of `hooks\*.ps1`
+   `skills\scout|frame|terrain|judge|build|kaizen|_engine` , ALL of `hooks\*.ps1`
    (`stop-gate` `anti-flaky` `fix-gate` `advisory-guard` `kaizen-detect` `kaizen-nudge` `kaizen-revert-log`),
    and `output-styles\concis-structure.md` (if the user opted into the output-style — see Step 9).
 2. **Remove obsolete older-generation skills** no longer shipped here (current pipeline = `scout` `frame`
-   `terrain` `judge` `fixer` + `_engine`). Ask before deleting (e.g. `define-need`, `review-work`, `concevoir-boucle-travail`).
+   `terrain` `judge` `build` + `_engine`). Ask before deleting (e.g. `define-need`, `review-work`, `concevoir-boucle-travail`).
 3. **Constitution** — in `%USERPROFILE%\.claude\CLAUDE.md`, **REPLACE** the existing
    `Constitution — cardinal reflexes` section with `CONSTITUTION.md`. **Do NOT append a second copy.** Leave
    any machine-only `## Local` section UNTOUCHED.
 4. **Hooks wiring** — make the `hooks` block in `settings.json` match `hooks\settings-snippet.json`. If the
    entries already exist, leave them; **never duplicate**. Validate the JSON parses.
 5. **What's new in 3.5.0** — security + hook hardening (RCE-by-clone closed, proof allowlist, extended anti-flaky, fail-closed, CI, LICENSE) → details in [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
-   - **`fixer` skill** — the producer's named fix loop (reproduce → localize → fix → verify red→green → guard
-     → loop back to judge). Copy `skills\fixer` (Step 1).
+   - **`build` skill** — the producer's named fix loop (reproduce → localize → fix → verify red→green → guard
+     → loop back to judge). Copy `skills\build` (Step 1).
    - **`kaizen` skill** — improve the kit from its OWN failures: locate a failed session / recurrent pattern →
      behavioral audit (reuses `judge` Mode B) → PROPOSE kit diffs → human OK → integrate + sync-kit. Never
      auto-writes. Copy `skills\kaizen` (Step 1).
@@ -57,7 +57,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 > README**. Execute the steps in order, ask before overwriting anything that exists, then give the final recap.
 
 **Step 1 — Skills + engine**
-- Copy the folders `skills\scout`, `frame`, `terrain`, `judge`, `fixer`, `kaizen`, `_engine` → `%USERPROFILE%\.claude\skills\`.
+- Copy the folders `skills\scout`, `frame`, `terrain`, `judge`, `build`, `kaizen`, `_engine` → `%USERPROFILE%\.claude\skills\`.
 - If a version already exists (including older generations: define-need/review-work/etc.): ask before
   overwriting/removing (this kit REPLACES older generations).
 
@@ -98,7 +98,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 **Step 8 — Tell the user how it works**
 - Substantial work → the pipeline triggers automatically: `frame` (the WHAT + which approach) → `terrain`
   (the HOW) → build (execution mechanics: ENGINE Ch.4) → `judge` (quality). `scout` at step 0 when the task
-  is not yet chosen; `fixer` to resolve a defect to a verified green. 100% autonomous, no plugins.
+  is not yet chosen; `build` to resolve a defect to a verified green. 100% autonomous, no plugins.
 - **Stop-gate v3**: Claude can no longer close a turn with an open, non-green run — a `green` is not taken on
   faith: the gate REPLAYS `signal-cmd` (idempotent allowlist), executes the `check:` lines, and checks the
   anti-fixation rule. Honest closure without a green = `degraded-closed` with YOUR consent on record. Per-run
@@ -140,7 +140,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 ## Kit contents
 | Item | Role |
 |---|---|
-| `skills\` (scout/frame/terrain/judge/fixer/kaizen + `_engine\ENGINE.md`) | the pipeline + fixer + kaizen + the canonical engine (THE CORE = 7 concepts; the rest = reference by regime) |
+| `skills\` (scout/frame/terrain/judge/build/kaizen + `_engine\ENGINE.md`) | the pipeline + build + kaizen + the canonical engine (THE CORE = 7 concepts; the rest = reference by regime) |
 | `skills\kaizen` | improve the kit from its own failures: behavioral audit (reuses judge Mode B) → PROPOSE → human OK → integrate + sync-kit (never auto-writes) |
 | `hooks\stop-gate.ps1` | **out-of-model closure authority** — a green is REPLAYED/verified, never believed |
 | `hooks\anti-flaky.ps1` | refuses raw sleeps in code (kills false signals at the source) |

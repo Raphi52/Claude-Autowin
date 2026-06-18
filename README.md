@@ -32,12 +32,12 @@ rewrites its own rules on a faulty diagnosis. Autowin puts critical decisions **
 | `scout` | surface improvement candidates on a target (scored table) |
 | `frame` | define the **NEED** (the WHAT), then — if the choice is open — the **approach OPTIONS** |
 | `terrain` | the **HOW**: prepare an observable autonomous loop (harness) |
-| `fixer` | resolve **ONE** defect through to verified green (red first → green → regression guard) |
+| `build` | resolve **ONE** defect through to verified green (red first → green → regression guard) |
 | `judge` | **adversarial external** review, uncorrelated multi-lens, up to the regime threshold |
 | `kaizen` | improve the kit from **its own failures** → PROPOSE → human OK → integrate |
 | `_engine/ENGINE.md` | shared canonical mechanics (THE CORE = 7 concepts; the rest = regime reference) |
 
-Chain: **scout → frame → terrain → build → judge** (`fixer` for a defect; `kaizen` for a recurring failure).
+Chain: **scout → frame → terrain → build → judge** (`build` for a defect; `kaizen` for a recurring failure).
 
 ## The guardrails (deterministic closure authority — `hooks/`)
 
@@ -79,7 +79,7 @@ It copies the skills + hooks, wires `settings.json` (merge, never overwrite), ad
 ## Repository structure
 
 ```
-skills/          scout · frame · terrain · fixer · judge · kaizen  + _engine/ENGINE.md
+skills/          scout · frame · terrain · build · judge · kaizen  + _engine/ENGINE.md
 hooks/           *.ps1 (guardrails) + settings-snippet.json (wiring) + test-hooks.ps1
 workflows/       improve-from-telemetry.js  (improvement loop driven by real telemetry)
 output-styles/   concis-structure.md        (scannable response format — optional)

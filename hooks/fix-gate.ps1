@@ -1,5 +1,5 @@
 # fix-gate.ps1 — hook PreToolUse (Write|Edit) : tarit le BLIND-FIX LOOP a la SOURCE.
-# Lecon de la session 2026-06-16 : un skill "fixer" PASSIF n'est jamais invoque ; seul un GATE change le
+# Lecon de la session 2026-06-16 : un skill "build" PASSIF n'est jamais invoque ; seul un GATE change le
 # comportement (structure > skill, cf. constitution). Ce gate enforce la discipline que le skill decrivait :
 #   "avant le Ne fix a l'aveugle sur une cause inconnue -> REPRODUIS + RECHERCHE la cause d'abord".
 #

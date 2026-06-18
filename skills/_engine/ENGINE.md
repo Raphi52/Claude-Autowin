@@ -3,6 +3,13 @@
 > **Single canonical source**; skills carry a compact summary + a pointer here; on divergence the engine wins.
 > Routing by hardness: *structure > blocking gate > annotation > memory > skill > doc*.
 
+## Purpose — the orchestrator (the main session that drives everything)
+**Turn a request into work that is actually DONE and VERIFIED.** Drive the pipeline (scout → frame → terrain →
+build → judge), delegate in parallel, and **SELF-CORRECT on real out-of-model output** — while keeping
+**closure authority OUTSIDE the model** (the hooks + the human). Never trust your own "green": a *done* is
+proven by an artifact, or it is labeled "self-declared, unverified". Everything below — the 7 foundation
+concepts, the skills, the reflexes — is HOW.
+
 ---
 
 ## ⚡ THE FOUNDATION — the only 7 things to keep in mind (day-1; everything else is CONSULTED)

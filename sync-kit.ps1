@@ -15,7 +15,7 @@ $pkg = Join-Path $env:USERPROFILE 'Desktop\Autowin'
 $enc = New-Object System.Text.UTF8Encoding($false)
 $files = @(
   'skills\scout\SKILL.md', 'skills\frame\SKILL.md', 'skills\terrain\SKILL.md', 'skills\judge\SKILL.md',
-  'skills\fixer\SKILL.md', 'skills\kaizen\SKILL.md',
+  'skills\build\SKILL.md', 'skills\kaizen\SKILL.md',
   'skills\_engine\ENGINE.md', 'skills\_engine\RUN-template.md',
   'hooks\anti-flaky.ps1', 'hooks\stop-gate.ps1', 'hooks\fix-gate.ps1', 'hooks\advisory-guard.ps1',
   'hooks\kaizen-detect.ps1', 'hooks\kaizen-nudge.ps1', 'hooks\kaizen-revert-log.ps1', 'hooks\test-hooks.ps1',

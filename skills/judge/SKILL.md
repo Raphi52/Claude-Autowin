@@ -18,7 +18,7 @@ description: >-
   WORKFLOW / behavior / habits → Mode B (target is a parameter: Claude's behavior, OR a codebase, OR a
   skill set — do NOT assume "the repo", derive/ask the target). Do NOT use to: frame a need (→ `frame`),
   prepare the autonomous loop / observability (→ `terrain`), run a single-pass code PR (→ code-review),
-  nor to FIX — this skill JUDGES, it never repairs: fixing always goes back to the producer = the `fixer` skill (the executor following ENGINE Ch.4 — BUILD).
+  nor to FIX — this skill JUDGES, it never repairs: fixing always goes back to the producer = the `build` skill (the executor following ENGINE Ch.4 — BUILD).
 ---
 
 # judge — ORCHESTRATOR, external adversarial review, looped to threshold (step 4)
@@ -76,7 +76,7 @@ over a high-risk area → **add the owning dimension (panel table) and re-run fr
 an unexamined gap. Empty after a real look → state "no blind spots detected" (silence ≠ full coverage).
 
 **[3] VERDICT** by threshold. Met → in *critical* only, run global cross-dimension verification first. Not
-met → **send back** prioritized defects to the producer — the `fixer` skill (or you switching hats; never fix as judge): same session = switch hats, fix,
+met → **send back** prioritized defects to the producer — the `build` skill (or you switching hats; never fix as judge): same session = switch hats, fix,
 update ledger, re-run from [1] · other session/user = emit the prioritized final report (ledger included)
 and END, a new invocation re-audits.
 
@@ -253,7 +253,7 @@ a skill, or memory without user OK.
 
 ## Don't
 
-- **FIX what you audit** — judge JUDGES, it never repairs: defects always go back to the producer = the `fixer` skill (or you switching hats same-session; a judge NEVER audits work it just produced).
+- **FIX what you audit** — judge JUDGES, it never repairs: defects always go back to the producer = the `build` skill (or you switching hats same-session; a judge NEVER audits work it just produced).
 - **Ship 100 on TEXT alone for an executable** — absent observation artifact → send back, not a sterile low note.
 - **Show raw internal jargon** in the report (`[S]/[F]`, `artifact_based`, `je-1`, "MIN", "ROI-stop", "canary/CANARY-BLIND") — translate to plain words.
 - **Disguise a degraded/INVALID/CANARY-BLIND state as green** — surface every false-green caveat; same-model panel is not independent confirmation.

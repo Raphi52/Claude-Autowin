@@ -1,21 +1,21 @@
 ---
-name: fixer
+name: build
 description: >-
-  The PRODUCER's named loop (frame → terrain → build/fixer → judge): resolve a DEFECT into a VERIFIED green.
+  The PRODUCER's named loop (frame → terrain → build → judge): resolve a DEFECT into a VERIFIED green.
   Invoked TWO ways — by `judge` (which sends prioritized defects back; judge NEVER repairs what it audits) AND
   by the user directly with a raw bug. REPRODUCES first (red before any fix — a fix on an unreproduced bug
   repairs a maybe-non-bug), LOCALIZES the REAL cause (confirm which view/module/branch/build ACTUALLY runs
   before static diagnosis — never assume), fixes the NAMED cause MINIMALLY (no opportunistic refactor),
   VERIFIES red→green with an OUT-OF-MODEL artifact (test/exit code/screenshot READ/query — never self-judged
   text), GUARDS against regression, then LOOPS BACK to `judge`. Execution mechanics are CANONICAL in
-  `_engine/ENGINE.md` Ch.4 — BUILD; the fixer wires them and carries only the delta: defect intake, triage,
+  `_engine/ENGINE.md` Ch.4 — BUILD; the build wires them and carries only the delta: defect intake, triage,
   the anti-blind reflexes, and the loop-back. Trigger on "fix the bug / make it green / the test fails repair it / apply the judge's findings / resolve the defects / it's still
   broken", or right after `judge` returns defects to the producer. Do NOT use to: AUDIT quality or decide if a
-  deliverable is done → `judge` (the fixer fixes, it NEVER judges its own fix); frame a need or decide WHAT to
+  deliverable is done → `judge` (the build fixes, it NEVER judges its own fix); frame a need or decide WHAT to
   build → `frame`; prepare the observability harness / autonomous loop → `terrain`.
 ---
 
-# fixer — resolve a defect into a VERIFIED green (the producer's loop)
+# build — resolve a defect into a VERIFIED green (the producer's loop)
 
 ## Purpose
 **Take ONE defect to a green that is VERIFIED out-of-model — not self-declared.** Reproduce the bug red FIRST,
@@ -37,22 +37,22 @@ quality verdict (that's `judge`) — so a defect is "done" only when an external
 
 **5. GUARD against regression.** Run the surrounding tests / a quick smoke to confirm a neighbour didn't break. A recurring class of bug worth catching → promote it into a `check:` line (the gate replays it).
 
-**6. LOOP BACK to `judge`.** The fixer never decides "done". Hand the verified fix back to `judge`; if the judge sent a batch, fix the next defect and re-submit the set. `judge` re-audits — an incomplete fix or a regression comes back here.
+**6. LOOP BACK to `judge`.** The build never decides "done". Hand the verified fix back to `judge`; if the judge sent a batch, fix the next defect and re-submit the set. `judge` re-audits — an incomplete fix or a regression comes back here.
 
 ## Output
 
-A defect is `green` in its `## Défauts` ledger entry ONLY after step 4's artifact passed, recording: named cause + minimal fix + proof artifact. Then `judge` owns the closure verdict — never the fixer. The RUN.md `status: green` is the machine-readable signal the Stop-gate replays.
+A defect is `green` in its `## Défauts` ledger entry ONLY after step 4's artifact passed, recording: named cause + minimal fix + proof artifact. Then `judge` owns the closure verdict — never the build. The RUN.md `status: green` is the machine-readable signal the Stop-gate replays.
 
 ## Don't
 
 - **No red → no fix** — never guess-patch an unreproduced bug.
 - **The code you read ≠ the code that runs** — confirm the live path / build / branch FIRST (the #1 trap); never diagnose statically before verifying the live execution.
 - **No bundled changes** — one cause, one fix; a green that bundles N changes can't attribute the fix or catch a regression.
-- **No self-verdict** — the fixer NEVER judges its own fix; that is `judge`'s job. Relayed report ≠ truth: verify the REAL artifact (diff / file / output), never the report on its word.
+- **No self-verdict** — the build NEVER judges its own fix; that is `judge`'s job. Relayed report ≠ truth: verify the REAL artifact (diff / file / output), never the report on its word.
 - **STOP-and-ask**: outside the harness · 3+ fixes failed in a row · genuine ambiguity · destructive/prod auth. Blocked (2-3 distinct approaches exhausted) → parallel resolver sub-agents BEFORE interrupting the human (reflex 9). Interrupt only for: destructive, out-of-scope, external dependency.
 
 ## Engine & reflexes
 
-BUILD mechanics — decompose into signal-bearing increments, red-first then green, systematic debugging, checkpoint/rollback, anti-regression cadence — are CANONICAL in `~/.claude/skills/_engine/ENGINE.md` **Ch.4 (BUILD)**. This skill wires them and adds only the fixer-specific delta. On divergence, the engine wins.
+BUILD mechanics — decompose into signal-bearing increments, red-first then green, systematic debugging, checkpoint/rollback, anti-regression cadence — are CANONICAL in `~/.claude/skills/_engine/ENGINE.md` **Ch.4 (BUILD)**. This skill wires them and adds only the build-specific delta. On divergence, the engine wins.
 
 Reflex anchor: **`CausalHypothesis:` before any edit** — a fix without a verified cause is a guess; the fix-gate blocks blind-fix loops.

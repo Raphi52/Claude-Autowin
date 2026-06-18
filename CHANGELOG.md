@@ -36,6 +36,6 @@ side remain on the roadmap (see `SECURITY.md`).
 
 ## 3.4.0
 
-- Skills `fixer` (producer loop) + `kaizen` (improve the kit from its own failures).
+- Skills `build` (producer loop) + `kaizen` (improve the kit from its own failures).
 - Hook `fix-gate` (anti blind-fix loop); kaizen system (`detect` / `nudge` / `revert-log`); `advisory-guard`.
 - stop-gate v3.2 — per-session scoping (concurrent sessions no longer cross-block each other).

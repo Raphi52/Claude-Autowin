@@ -23,7 +23,7 @@ description: >-
   Trigger on "kaizen this session", "improve the kit from my recurring failures", "audit
   my habits / workflow / blind spots", "what do I systematically miss", OR right after the `kaizen-nudge` hook
   surfaces a recurrent failure pattern. Do NOT use to: audit the QUALITY of a one-off deliverable → `judge`
-  (Mode A); fix a single code defect → `fixer`; frame a new need → `frame`. Kaizen targets the BEHAVIOR/kit,
+  (Mode A); fix a single code defect → `build`; frame a new need → `frame`. Kaizen targets the BEHAVIOR/kit,
   not a specific artifact.
 ---
 
