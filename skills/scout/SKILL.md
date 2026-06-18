@@ -24,6 +24,12 @@ description: >-
 
 # scout — surface actionable improvement candidates (read-only: propose, never fix/frame/judge)
 
+## Purpose
+**Find WHAT is worth doing on a target — surface the real opportunities, not how to do them.** Turn a vague
+"what could I improve / where do I start here" into a ranked SHORTLIST of concrete, pickable candidates (debt,
+bugs, fragilities, unfinished UX, missing perf/tests — AND bold premise-breaking ideas), each with enough
+signal to choose. Read-only: scout PROPOSES the menu; it never frames, fixes, or judges.
+
 ## Procedure  (default mode — "what to improve / where to start on TARGET")
 1. **Locate the touchable scope FIRST** — the owned/editable perimeter (`*.sln`/`*.csproj`/`package.json`/launch scripts). EXCLUDE legacy/vendored/generated BEFORE scanning — a blind `grep TODO` over the whole tree lands in the untouchable monolith and wastes the run.
 2. **Multi-angle scan, IN PARALLEL** (1 agent per lens, ONE message; loop-until-dry: stop at 2 dry rounds or ~12 candidates; dedup by core idea). THREE lens families — do NOT limit to markers (perf/UX gaps + bold ideas are non-grep-able):

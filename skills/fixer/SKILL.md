@@ -17,6 +17,12 @@ description: >-
 
 # fixer — resolve a defect into a VERIFIED green (the producer's loop)
 
+## Purpose
+**Take ONE defect to a green that is VERIFIED out-of-model — not self-declared.** Reproduce the bug red FIRST,
+localize the REAL cause (the code that actually runs), fix only what's named, then prove red→green with a real
+artifact (test / exit code / screenshot READ / query). The producer's loop: it fixes, it NEVER signs its own
+quality verdict (that's `judge`) — so a defect is "done" only when an external signal says so.
+
 ## Procedure  (per defect — one at a time)
 
 **0. Intake & triage.** One work item = one `RUN.md`; each defect = one entry in its `## Défauts` ledger (cite the proof the judge/hook gave). Several defects → order by severity / blast-radius and fix ONE at a time (a batch fix hides which change did what). Set the RUN header `regime:`. Place the RUN.md at `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` and set the `session:` header (session-scoping mechanics + legacy fallback: **ENGINE ch.3 / socle §1**). **A mono-defect fix has NO approach fork** → DELETE the template's `## Options`/`Décision:` scaffold (a repair scores no options; a leftover `Décision:` placeholder used to arm the closure anti-fixation gate — now also ignored gate-side).

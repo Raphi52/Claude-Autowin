@@ -17,6 +17,13 @@ description: >-
 
 # frame — two passes, one skill: frame the need, then (if open) explore the options
 
+## Purpose
+**Understand the need at 100% — including what the user did NOT write.** Frame the real PROBLEM (not the
+requested solution) and actively surface the **unstated**: implicit constraints, hidden presuppositions, and
+the **blind spots the user never articulated** — so nothing un-asked sinks the work downstream. Everything
+below is HOW that happens: the archetype questions pull the implicit out, the blind-spot sweep hunts what no
+question touched, the board-gate auto-answers the evident and surfaces to the human only what genuinely needs them.
+
 ## Procedure
 
 ### 0. RUN file

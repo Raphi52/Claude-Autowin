@@ -29,6 +29,12 @@ description: >-
 
 # kaizen — improve the system from its own failures (behavioral audit → propose → human-OK → integrate)
 
+## Purpose
+**Make the SYSTEM learn from its own failures — so the same mistake doesn't recur next session.** Turn a
+session's blind spots (defects Claude hit, corrections the user gave) into VERIFIED, human-approved edits to
+the kit (CLAUDE.md reflexes / hooks / skills / memory) that change FUTURE behavior. It only PROPOSES — it NEVER
+auto-writes its own rules (closure authority is the human; a self-editing audit would grave noise on a misread).
+
 ## Procedure
 1. **LOCATE the target** (the step judge Mode B doesn't carry). **DEFAULT = the CURRENT session** — the conversation `/kaizen` is invoked in. Read its OWN transcript on disk: `~/.claude/projects/<project>/<SESSION_ID>.jsonl` (+ `subagents/`, `tool-results/`), where `<SESSION_ID>` is the id injected each turn by the UserPromptSubmit hook (also visible in any `SESSION_ID=…` system reminder). The transcript is written as the session runs, so it's available mid-session — point the audit lenses at THAT file. No need to ask which session; "kaizen" alone = kaizen THIS one. Other targets, only if the user names them (confirm, don't assume):
    - **a named PAST session** — "kaizen session X / the last one I tried to kaizen". Find it by first user prompt, dominant topic, or a prior `kaizen`/`kaizen-past-session` fork. **Cite the evidence** (first prompt + a topic line) and CONFIRM before auditing — a wrong target wastes the whole fan-out. Given a disambiguator (a remembered first prompt, a topic), grep all `projects/*/*.jsonl` for it.

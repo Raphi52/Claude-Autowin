@@ -19,6 +19,13 @@ description: >-
 
 # terrain — prepare the self-correction terrain (step 2)
 
+## Purpose
+**Make the ground ready for Claude to work AUTONOMOUSLY and self-correct — BEFORE the loop starts.** A framed
+need with a settled approach isn't enough to run solo: Claude must be able to SEE its own real output
+(screenshots + logs), run in the right environment, and resume after interruption. Terrain installs that
+observability + harness + resume-state (building what's missing) so the autonomous loop catches its own errors
+instead of running blind.
+
 ## Procedure
 
 1. **Read the RUN.md first** — header `regime:`, `## Besoin`, and the `Décision:` line of `## Options`. The chosen approach pilots the harness: a CLI approach and a GUI approach demand different observability; mounting the wrong one makes the executor blind. You spec ONLY the signal↔harness bridge specific to this task; the generic loop mechanics are **owned by ENGINE Ch.4 — BUILD**. Never re-specify those.
