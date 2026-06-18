@@ -7,9 +7,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$j = [Console]::In.ReadToEnd() | ConvertFrom-Json; $st = $j.tool_input.subagent_type; $hasModel = $j.tool_input.PSObject.Properties.Name -contains 'model'; $set = $false; if (($st -eq 'Explore' -or $st -eq 'general-purpose') -and -not $hasModel) { $set = $true }; if ($set) { if ($hasModel) { $j.tool_input.model = 'sonnet' } else { $j.tool_input | Add-Member -NotePropertyName model -NotePropertyValue 'sonnet' }; @{ hookSpecificOutput = @{ hookEventName = 'PreToolUse'; updatedInput = $j.tool_input } } | ConvertTo-Json -Depth 20 -Compress }",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/model-tier.ps1\"",
             "shell": "powershell",
-            "statusMessage": "Tiering Sonnet pour sous-agents Explore/general-purpose"
+            "statusMessage": "Model tiering (Explore/general-purpose -> sonnet)"
           }
         ]
       },
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$j=[Console]::In.ReadToEnd()|ConvertFrom-Json; $fp=[string]$j.tool_input.file_path; $sid=[string]$j.session_id; $ext=''; if($fp){$ext=[System.IO.Path]::GetExtension($fp).ToLower()}; if($ext -and (@('.ps1','.cs','.py','.ts','.js','.sql','.md') -contains $ext)){ $s=Join-Path ([System.IO.Path]::GetTempPath()) ('claude-review-nudge-'+$sid+'.flag'); if(-not(Test-Path $s)){ New-Item -ItemType File -Path $s -Force|Out-Null; (@{hookSpecificOutput=@{hookEventName='PostToolUse';additionalContext='Rappel judge (1x/session): livrable substantiel modifie. Passe-le a judge avant de clore (le producteur ne s auto-certifie pas), ou justifie le skip (jetable/trivial).'}}|ConvertTo-Json -Depth 10 -Compress) } }",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/judge-nudge.ps1\"",
             "shell": "powershell",
             "statusMessage": "judge nudge"
           },
@@ -73,9 +73,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$j = [Console]::In.ReadToEnd() | ConvertFrom-Json; $sid = [string]$j.session_id; $cwd = [string]$j.cwd; if (-not $cwd) { $cwd = [string]$PWD }; $base = Join-Path $cwd 'Audit\\workspaces'; $d = if ($sid) { Join-Path $base $sid } else { $base }; if (Test-Path $d) { $o = @(Get-ChildItem $d -Filter RUN.md -Recurse -ErrorAction SilentlyContinue | Where-Object { (Get-Content $_.FullName -TotalCount 3) -match 'status:\\s*open' }); if ($o.Count) { (@{ systemMessage = ('PreCompact: ' + $o.Count + ' RUN.md ouvert(s) de CETTE session -- mets ## Reprise/Journal a jour avant de perdre le contexte.') } | ConvertTo-Json -Compress) } }",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/precompact-runcheck.ps1\"",
             "shell": "powershell",
-            "statusMessage": "PreCompact (RUN ouvert ?)"
+            "statusMessage": "PreCompact (open RUN ?)"
           }
         ]
       }
@@ -85,13 +85,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$j = [Console]::In.ReadToEnd() | ConvertFrom-Json; $p = [string]$j.prompt; if ($p.TrimStart().StartsWith('?')) { (@{ hookSpecificOutput = @{ hookEventName = 'UserPromptSubmit'; additionalContext = 'MODE PENSEE (prefixe ?): l utilisateur reflechit a voix haute. Discute/structure, ne lance AUCUN outil Write/Edit/Agent ni action irreversible tant qu il n a pas donne un ordre explicite SANS le ?.' } } | ConvertTo-Json -Depth 10 -Compress) }",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/thinking-mode.ps1\"",
             "shell": "powershell",
-            "statusMessage": "Mode pensee (?)"
+            "statusMessage": "Thinking mode (?)"
           },
           {
             "type": "command",
-            "command": "$j=[Console]::In.ReadToEnd()|ConvertFrom-Json; $sid=[string]$j.session_id; if($sid){ (@{hookSpecificOutput=@{hookEventName='UserPromptSubmit';additionalContext=('SESSION_ID='+$sid+'. Pour isoler les sessions concurrentes: ecris tout RUN.md sous Audit\\workspaces\\'+$sid+'\\<subject>-workspace\\RUN.md (le Stop-gate v3.2 n enforce QUE les runs de cette session).')}}|ConvertTo-Json -Depth 10 -Compress) }",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/session-inject.ps1\"",
             "shell": "powershell",
             "statusMessage": "Inject session_id (scope workspaces)"
           },

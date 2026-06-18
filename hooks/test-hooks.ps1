@@ -119,6 +119,20 @@ New-Item -ItemType Directory -Force -Path $d | Out-Null
 Run 'stop-gate.ps1' $sg | Out-Null
 Check 'REG(Gemini) GATE-VERIFIED sur sa propre ligne (RUN.md sans NL final)' ((Get-Content (Join-Path $d 'RUN.md'))[-1] -match '^\s*\[[^\]]*\]\s*GATE-VERIFIED\s*$')
 
+# --- extracted inline hooks (2026-06-18) : model-tier / judge-nudge / precompact-runcheck / thinking-mode / session-inject ---
+Check 'model-tier FIRE (Explore, no model -> sonnet)' ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'Explore' } })) -match 'sonnet')
+Check 'model-tier SILENT (other agent type)' (-not ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'statusline-setup' } })) -match 'updatedInput'))
+$jnflag = Join-Path ([System.IO.Path]::GetTempPath()) ('claude-review-nudge-' + $sid + '.flag'); Remove-Item $jnflag -EA SilentlyContinue
+Check 'judge-nudge FIRE (code file, fresh session)' ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x.py' } })) -match 'additionalContext')
+Check 'judge-nudge SILENT (.txt out of scope)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x.txt' } })) -match 'additionalContext'))
+$pc = Join-Path $tmp "Audit\workspaces\$sid\pc-workspace"; New-Item -ItemType Directory -Force $pc | Out-Null; Set-Content (Join-Path $pc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
+Check 'precompact FIRE (open RUN -> systemMessage)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
+Check 'precompact SILENT (no session dir)' (-not ((Run 'precompact-runcheck.ps1' (J @{ session_id = 'none-xyz'; cwd = $tmp })) -match 'systemMessage'))
+Check 'thinking-mode FIRE (? prefix)' ((Run 'thinking-mode.ps1' (J @{ prompt = '? je reflechis' })) -match 'THINKING MODE')
+Check 'thinking-mode SILENT (normal prompt)' (-not ((Run 'thinking-mode.ps1' (J @{ prompt = 'cree le module' })) -match 'THINKING MODE'))
+Check 'session-inject FIRE (session_id -> SESSION_ID)' ((Run 'session-inject.ps1' (J @{ session_id = 'abc123' })) -match 'SESSION_ID=abc123')
+Check 'session-inject SILENT (no session_id)' (-not ((Run 'session-inject.ps1' (J @{ prompt = 'x' })) -match 'SESSION_ID'))
+
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
 "--- $script:fails echec(s) ---"

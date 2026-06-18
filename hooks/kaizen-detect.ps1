@@ -15,7 +15,7 @@ $cutoff = if ($SinceDays -gt 0) { (Get-Date).AddDays(-$SinceDays) } else { [date
 $fixtureGlobs = if ($env:KAIZEN_FIXTURE_PATHS) { $env:KAIZEN_FIXTURE_PATHS -split ';' } else { @('C:\x\*', 'C:\tmp\*', ((Join-Path ([System.IO.Path]::GetTempPath()) 'claude-test*'))) }
 
 $rows = @()
-foreach ($line in (Get-Content $f)) {
+foreach ($line in ([System.IO.File]::ReadLines($f))) {   # fix (Gemini Optimizer) : streaming, ne charge pas tout le fichier en memoire
     if (-not $line.Trim()) { continue }
     try { $o = $line | ConvertFrom-Json } catch { continue }
     $ts = [datetime]::MinValue; try { $ts = [datetime]$o.ts } catch { }
