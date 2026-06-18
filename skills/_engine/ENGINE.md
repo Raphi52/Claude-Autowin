@@ -1,212 +1,201 @@
-# ENGINE — le socle (à tenir en tête) + la référence (à consulter au moment où elle sert)
+# ENGINE — the foundation (to keep in mind) + the reference (to consult when the moment comes)
 
 > **Single canonical source**; skills carry a compact summary + a pointer here; on divergence the engine wins.
 > Routing by hardness: *structure > blocking gate > annotation > memory > skill > doc*.
 
 ---
 
-## ⚡ LE SOCLE — les 7 seules choses à tenir en tête (jour-1 ; tout le reste se CONSULTE)
+## ⚡ THE FOUNDATION — the only 7 things to keep in mind (day-1; everything else is CONSULTED)
 
-1. **Un travail = UN fichier** : `RUN.md` dans son workspace **scopé par session** (`Audit\workspaces\<session_id>\<subject>-workspace\` — le `session_id` est injecté chaque tour par le hook UserPromptSubmit ; le Stop-gate v3.2 n'enforce QUE les runs de SA session → fini le cross-block entre sessions concurrentes).
-   Header : `status: open|green|red|degraded-closed` · `regime:` · `signal:` · `signal-cmd:` (optionnel) · `session:` (scope ; sinon l'emplacement `<session_id>\` fait foi) · `gate: off` (opt-out justifié).
-   ⚠️ `signal-cmd` est exécuté via `cmd /c` EXACTEMENT tel qu'écrit — c'est un artefact aussi : **quote tout
-   chemin contenant des espaces**, et ne déclare jamais une commande que tu n'as pas exécutée une fois
-   toi-même. (Cicatrice du premier rejeu live : un `C:\Mon Projet\…` non quoté a rendu irrejouable un green
-   pourtant vérifié 5× — le gate l'a refusé, à raison.)
-2. **Un seul gate bloquant : la clôture.** Run `open`/`red` → la fin de tour est bloquée. Run `green` → le gate
-   ne te CROIT pas : il **rejoue** `signal-cmd` (whitelist idempotente), **exécute** tes lignes `check:` et
-   vérifie l'anti-fixation — une fois par transition. Tout le reste annote, ou n'existe pas.
-3. **Verdict honnête : GREEN / RED / INVALID — INVALID par défaut.** Une absence de preuve n'est jamais un
-   vert. Un vert sans artefact hors-modèle se dit : « auto-déclaré, non vérifié ». **Idem pour toute
-   conclusion DITE en cours de route** (« c'est X · impossible · intrinsèque · c'est fixé ») : étiquetée
-   HYPOTHÈSE + confiance tant qu'aucun artefact hors-modèle ne l'ancre. Un « impossible/intrinsèque » →
-   d'abord demander « ça a déjà marché ? » (si oui = RÉGRESSION, pas une limite). Affirmer une hypothèse
-   comme un fait coupe la recherche de l'humain et te fait rétracter au tour suivant.
-4. **Le régime est LA molette** : `disposable` = zéro cérémonie (pas de RUN, gates désarmés) ·
-   `standard` = léger (panel réduit, 1 rejeu à la clôture) · `critical` = tout armé (panel complet, canari,
-   source hors-modèle). L'effort suit l'enjeu, mécaniquement.
-5. **~10 cardinaux en mémoire** (« AU MOMENT OÙ X → Y ») — les réflexes ; la mémoire propose, le gate dispose.
-6. **Une leçon durable devient du code quand c'est possible** : ligne `check: <commande>` dans le RUN
-   (le gate l'exécute) ou règle mémoire sinon. Une correction non persistée se régénère.
-7. **4 skills accélérateurs** — `frame` (besoin+options) · `terrain` (harnais) · `judge` (review) · `scout`
-   (candidats). **Le socle fonctionne avec ZÉRO skill déclenchée** ; leur taux de déclenchement se mesure
-   (routeurs), il ne se suppose pas.
+1. **One task = ONE file**: `RUN.md` in its **session-scoped** workspace (`Audit\workspaces\<session_id>\<subject>-workspace\` — the `session_id` is injected every turn by the UserPromptSubmit hook; Stop-gate v3.2 enforces ONLY the runs of its own session → no more cross-blocking between concurrent sessions).
+   Header: `status: open|green|red|degraded-closed` · `regime:` · `signal:` · `signal-cmd:` (optional) · `session:` (scope; otherwise the `<session_id>\` location is authoritative) · `gate: off` (justified opt-out).
+   ⚠️ `signal-cmd` is executed via `cmd /c` EXACTLY as written — it is an artifact too: **quote every
+   path containing spaces**, and never declare a command you have not run yourself at least once.
+   (Scar from the first live replay: an unquoted `C:\Mon Projet\…` made a green unrepayable even though
+   it had been verified 5× — the gate rejected it, rightly.)
+2. **One blocking gate: closure.** Run `open`/`red` → the end of turn is blocked. Run `green` → the gate
+   does NOT take your word for it: it **replays** `signal-cmd` (idempotent whitelist), **executes** your `check:` lines and
+   verifies anti-fixation — once per transition. Everything else annotates, or does not exist.
+3. **Honest verdict: GREEN / RED / INVALID — INVALID by default.** Absence of proof is never a
+   green. A green without an out-of-model artifact is stated as: "self-declared, unverified". **Same for every
+   conclusion stated along the way** ("it's X · impossible · intrinsic · it's fixed"): labeled
+   HYPOTHESIS + confidence until an out-of-model artifact anchors it. An "impossible/intrinsic" →
+   first ask "has this ever worked?" (if yes = REGRESSION, not a limit). Asserting a hypothesis
+   as a fact cuts off the human's investigation and forces a retraction the next turn.
+4. **Regime is THE dial**: `disposable` = zero ceremony (no RUN, gates disarmed) ·
+   `standard` = light (reduced panel, 1 replay at closure) · `critical` = fully armed (full panel, canary,
+   out-of-model source). Effort follows stakes, mechanically.
+5. **~10 cardinals in memory** ("THE MOMENT X → Y") — the reflexes; memory proposes, the gate disposes.
+6. **A durable lesson becomes code when possible**: a `check: <command>` line in the RUN
+   (the gate executes it) or a memory rule otherwise. An unpersisted correction regenerates.
+7. **4 accelerator skills** — `frame` (need+options) · `terrain` (harness) · `judge` (review) · `scout`
+   (candidates). **The foundation works with ZERO skill triggered**; their trigger rate is measured
+   (routers), not assumed.
 
-**Coût par régime** (la cérémonie n'existe que si l'enjeu la paie) :
-| Régime | RUN.md | Gate à la clôture | Panel de review | Canari |
+**Cost per regime** (ceremony only exists if the stakes justify it):
+| Regime | RUN.md | Gate at closure | Review panel | Canary |
 |---|---|---|---|---|
-| disposable | non | passe | 1 juge ou skip | non |
-| standard | oui | rejeu+checks (1×/transition) | Fidèle + 2-4 dims à risque | échantillonné |
-| critical | oui | rejeu+checks | complet + [S] doublés + hors-modèle | **oui** |
+| disposable | no | passes | 1 judge or skip | no |
+| standard | yes | replay+checks (1×/transition) | Faithful + 2-4 risk dims | sampled |
+| critical | yes | replay+checks | full + doubled [S] + out-of-model | **yes** |
 
 ---
 
-# RÉFÉRENCE (ne pas mémoriser — consulter quand le moment arrive)
+# REFERENCE (do not memorize — consult when the moment comes)
 
-## Ch.1 — GENERATE & GATE *(sert pendant `frame`/`scout` : générer large, ne remonter que le décisif)*
+## Ch.1 — GENERATE & GATE *(used during `frame`/`scout`: generate broadly, surface only the decisive)*
 
-**Pattern** : POOL → SCORE → GATE → auto-résoudre le routinier | remonter le décisif. L'humain est la
-ressource la plus rare et le seul vrai oracle — jamais endormi sur des OK-OK. L'autonomie ne s'étend JAMAIS à
-la clôture (socle §2-3).
+**Pattern**: POOL → SCORE → GATE → auto-resolve the routine | surface the decisive. The human is the
+scarcest resource and the only true oracle — never lulled with OK-OK. Autonomy NEVER extends to
+closure (foundation §2-3).
 
-- **Générer large et DIVERS, en parallèle** : 1 générateur par lentille orthogonale (UN message). Lentilles —
-  *questions* : Naive · Breaker · Contradictor · Perfectionist · Diplomat · Explorer · Pragmatist · Emotional.
-  *Approches* : MVP · robust · perf · lean · reuse · creative · cost · UX · convention · contrarian.
-  *Candidats d'amélioration* : familles grep-markers ET lecture-de-flux. Chercher l'existant AVANT de
-  proposer, citer les faits ; sortie CONCRÈTE-EXTRÊME (`Dupont,"Le Grand"\nSARL`) — l'abstrait est rejeté à
-  réception. **Loop-until-dry** : chaque tour reçoit le déjà-trouvé (« du NEUF ») ; stop à 2 tours secs OU cap
-  (~12 candidats / ~10 tours, journaliser le coupé). **Dédup par idée-noyau** avant scoring. Ressources
-  exclusives (build/banc/DB/port) : un seul propriétaire — isoler ou sérialiser.
-- **Deux échelles /100, jamais fusionnées** : **impact** (80-100 = change la NATURE → remonte d'office ·
-  50-79 contrainte forte · 30-49 utile · <30 drop) ⟂ **confiance-autonomie** (mesurée APRÈS recherche :
-  ≥80 = fait CITÉ · 50-79 plusieurs lectures · <50 devinette).
-- **Board** : 🧠 l'Autonome (cherche d'abord — UN sweep groupé par tour résout les faits de TOUTES les
-  candidates ≥30) · 🙋 l'Avocat du silence (rejette tout ≥80 sans fait cité ; flague le strictement-privé) ·
-  ⚖️ ≥80 étayé ET rien de privé → hypothèse ANNONCÉE (« je pars du principe que… — corrige »), jamais
-  silencieuse. **Override fort-impact** : impact ≥80 → remonter quelle que soit la confiance (carve-out : un
-  « pourquoi » explicitement énoncé). **Stop** : meilleur impact brut <30, épuisement du gate, ou cap.
-- **⚖️ Pertinence gate (summon-or-not)** : avant d'auto-invoquer un skill sur un besoin, scorer la **valeur
-  marginale NETTE du coût** /100 (≥50 = summon). Échelle **3 tiers** (calibrée sur 2 tests) : **(1)** 1 scoreur
-  *cheap* — score ≤~35 ou ≥~70 → décide direct (les cas clairs sont **bimodaux**, le panel y est gaspillé) ·
-  **(2)** seulement si **35-70** → panel décorrélé (modèles/lentilles ≠) · **(3)** si le panel **split** (vote
-  croise le seuil) OU **spread >~20** → **SURFACE à l'humain**, jamais de drop muet. **Unifie** les freins
-  épars (advisory-gate, off-ramp trivial, ROI-stop) — ne pas en ajouter un parallèle. Garde-fou : **conservateur
-  en veto AMONT** (scout/frame — un besoin mal cadré ne se vétote pas par un jugement non-cadré), **agressif en
-  AVAL redondant** (re-panels, boucles en trop). Désarmé en disposable. (producer=scoreur → signal, pas preuve.)
-- **⚓ Anti-fixation** (appliquée par le gate à la clôture, socle §2) : pas de décision engagée sans **≥3
-  options scorées réellement distinctes** (des options-paille = défaut à flaguer par la review) — désarmée en
-  disposable. Annotée à l'écriture, bloquante à la clôture.
-- **Schéma `gg-1`** (validé à RÉCEPTION ; *absent* ≠ *présent-mais-non-conforme* ; rejet sur version-skew) :
+- **Generate broadly and DIVERSELY, in parallel**: 1 generator per orthogonal lens (ONE message). Lenses —
+  *questions*: Naive · Breaker · Contradictor · Perfectionist · Diplomat · Explorer · Pragmatist · Emotional.
+  *Approaches*: MVP · robust · perf · lean · reuse · creative · cost · UX · convention · contrarian.
+  *Improvement candidates*: grep-markers families AND stream-reading. Search for what EXISTS before
+  proposing, cite the facts; output CONCRETE-EXTREME (`Dupont,"Le Grand"\nSARL`) — abstractions are rejected on receipt. **Loop-until-dry**: each turn receives what was already found ("NEW only"); stop at 2 dry turns OR cap
+  (~12 candidates / ~10 turns, log what was cut). **Dedup by core-idea** before scoring. Exclusive resources
+  (build/bench/DB/port): one owner only — isolate or serialize.
+- **Two /100 scales, never merged**: **impact** (80-100 = changes the NATURE → surfaced unconditionally ·
+  50-79 strong constraint · 30-49 useful · <30 drop) ⟂ **autonomy-confidence** (measured AFTER research:
+  ≥80 = CITED fact · 50-79 multiple readings · <50 guess).
+- **Board**: 🧠 the Autonomous (search first — ONE grouped sweep per turn resolves facts for ALL
+  candidates ≥30) · 🙋 the Silence Advocate (rejects anything ≥80 without a cited fact; flags the strictly-private) ·
+  ⚖️ ≥80 supported AND nothing private → ANNOUNCED assumption ("I'm assuming… — correct me"), never
+  silent. **High-impact override**: impact ≥80 → surface regardless of confidence (carve-out: an explicitly
+  stated "why"). **Stop**: best raw impact <30, gate exhausted, or cap.
+- **⚖️ Pertinence gate (summon-or-not)**: before auto-invoking a skill on a need, score the **net marginal value minus cost** /100 (≥50 = summon). **3-tier scale** (calibrated on 2 tests): **(1)** 1 *cheap* scorer — score ≤~35 or ≥~70 → decide directly (clear cases are **bimodal**, panel is wasted there) ·
+  **(2)** only if **35-70** → decorrelated panel (different models/lenses) · **(3)** if the panel **splits** (vote
+  crosses the threshold) OR **spread >~20** → **SURFACE to the human**, never a silent drop. **Unifies** the scattered brakes (advisory-gate, trivial off-ramp, ROI-stop) — do not add a parallel one. Guardrail: **conservative in UPSTREAM veto** (scout/frame — a poorly framed need is not vetoed by an unframed judgment), **aggressive on DOWNSTREAM redundancy** (re-panels, excess loops). Disarmed in disposable. (producer=scorer → signal, not proof.)
+- **⚓ Anti-fixation** (applied by the gate at closure, foundation §2): no decision committed without **≥3
+  genuinely distinct scored options** (straw options = a defect to flag in review) — disarmed in
+  disposable. Annotated at write-time, blocking at closure.
+- **Schema `gg-1`** (validated ON RECEIPT; *absent* ≠ *present-but-non-conforming*; rejected on version-skew):
   `{"schema_version":"gg-1","candidates":[{"id","lens","content","impact","autonomy_confidence","cited_fact","strictly_private","proposed_assumption"}]}`
 
-## Ch.2 — JUDGE *(sert pendant `judge` ; le canari ne sert qu'en critical)*
+## Ch.2 — JUDGE *(used during `judge`; the canary is only used in critical)*
 
-**Règles fondatrices.** Juge = EXTERNE (n'a pas produit) + INFORMÉ (besoin + décisions délibérées + ledger
-`## Défauts`) + jamais amnésique (vérifie d'abord que les fixes tiennent ; ne signale que NOUVEAU /
-fix-incomplet / régression). **Un juge ne corrige jamais.** Plafond same-model : aucune combinaison de copies
-n'est un oracle — la crédibilité vient de la séparation + l'obligation de preuve ; la clôture reste
-hors-modèle (socle §2).
+**Founding rules.** Judge = EXTERNAL (did not produce) + INFORMED (need + deliberate decisions + ledger
+`## Défauts`) + never amnesiac (first verifies that fixes held; only reports NEW /
+incomplete-fix / regression). **A judge never repairs.** Same-model ceiling: no combination of copies
+is an oracle — credibility comes from separation + the obligation of proof; closure stays
+out-of-model (foundation §2).
 
-**Classes de preuve** : **REJOUABLE** (CLI sans effet de bord) → rejouée, pas crue (par le gate via
-`signal-cmd`, ou un Vérifieur à froid pour le coûteux) · **ATTESTABLE** (screenshot, artefact lu) → doit
-s'auto-prouver : fraîcheur (artefact > action) + non-vacuité (N tests >0, log non vide, exit 0 ET stderr
-propre) + ciblage (run-stamp) + contre-contrôle négatif. `artifact_based:true` seulement si ça tient.
+**Proof classes**: **REPLAYABLE** (CLI with no side-effect) → replayed, not believed (by the gate via
+`signal-cmd`, or a cold Verifier for expensive ones) · **ATTESTABLE** (screenshot, read artifact) → must
+self-prove: freshness (artifact > action) + non-vacuity (N tests >0, log non-empty, exit 0 AND clean stderr)
++ targeting (run-stamp) + negative counter-check. `artifact_based:true` only if it holds.
 
-**Scoring** : retirer d'abord l'objectivable (exit, comptes, pixel-diff → déterministe). [F] = 1 juge,
-contre-exemple ou 100. [S] = attaque d'expert hostile puis note ; **2 tirages décorrélés par LENTILLE ORTHOGONALE NOMMÉE** (tirage A et B reçoivent des lentilles
-distinctes d'une liste par dimension — p.ex. Fidèle A=« tracer chaque claim→critère du besoin » / B=« trouver un cas du besoin non couvert » — PAS juste « cadrage différent »), **médiane-puis-MIN** ; écart >20 → 3ᵉ tirage MIN ; écart des 3 tirages encore >15 →
-**INDÉTERMINÉ + demander** — jamais un vert silencieux. **Variance-gate (kaizen 2026-06-18)** : un /100 d'un
-SEUL modèle est un JUGEMENT, pas une mesure — des tirages même-modèle sur UN artefact qui s'écartent de >20
-(vécu : 97/72, 96/61/58) prouvent l'instrument peu fiable → titrer **l'écart**, jamais un MIN maquillé en
-nombre propre ; surfacer le score en **bande grossière** (keep/maybe/drop) + provenance « auto-jugé, pas
-mesuré », pas une fausse précision à 2 chiffres.
+**Scoring**: first remove the objectifiable (exit, counts, pixel-diff → deterministic). [F] = 1 judge,
+counterexample or 100. [S] = hostile expert attack then score; **2 decorrelated draws per NAMED ORTHOGONAL LENS** (draw A and B receive
+distinct lenses from a per-dimension list — e.g. Faithful A="trace each claim→need criterion" / B="find a case of the need not covered" — NOT just "different framing"), **median-then-MIN**; spread >20 → 3rd draw MIN; spread of all 3 draws still >15 →
+**INDETERMINATE + ask** — never a silent green. **Variance-gate (kaizen 2026-06-18)**: a /100 from a
+SINGLE model is a JUDGMENT, not a measurement — same-model draws on ONE artifact that diverge by >20
+(lived: 97/72, 96/61/58) prove the instrument unreliable → report **the spread**, never a MIN dressed up as a clean
+number; surface the score as a **coarse band** (keep/maybe/drop) + provenance "self-judged, not measured", not a 2-digit false precision.
 
-**Agrégation** : verdicts PASS/FAIL → MIN de toutes les dimensions — **SAUF** une dimension dont le défaut
-bloquant est `nature:intrinsic` (plafond de conception, pas un bug corrigeable) : EXCLUE du MIN global,
-portée en **NOTE DE RISQUE** visible (jamais maquillée en vert). **Mode CLASSEMENT** (N candidats) → somme
-pondérée post-veto (MIN = veto éliminatoire + intra-[S] seulement). **`[1b]` fail-closed** : N juges ⇒
-N JSON `je-1` valides ; manquant/invalide → 1 retry → sinon dimension **INVALID, plafonne et bloque**. Un
-majeur RÉEL corrigé laisse un **garde anti-régression permanent** (`check:` dans RUN.md / repro rejouable) —
-sinon il peut revenir non-audité (anti-whack-a-mole : un défaut tué ne ressuscite pas).
-Schéma : `{"schema_version":"je-1","dimension","note","interval","unstable","artifact_based","defects":[{"severity","nature":"fixable|intrinsic|wont_fix","type","description","to_reach_100"}]}`
+**Aggregation**: PASS/FAIL verdicts → MIN of all dimensions — **EXCEPT** a dimension whose blocking defect is `nature:intrinsic` (design ceiling, not a fixable bug): EXCLUDED from the global MIN,
+carried as a visible **RISK NOTE** (never dressed up as green). **RANKING mode** (N candidates) → weighted sum post-veto (MIN = eliminatory veto + intra-[S] only). **`[1b]` fail-closed**: N judges ⇒
+N valid `je-1` JSON; missing/invalid → 1 retry → else dimension **INVALID, caps and blocks**. A REAL major
+that is fixed leaves a **permanent anti-regression guard** (`check:` in RUN.md / replayable repro) —
+otherwise it can return unaudited (anti-whack-a-mole: a killed defect does not resurrect).
+Schema: `{"schema_version":"je-1","dimension","note","interval","unstable","artifact_based","defects":[{"severity","nature":"fixable|intrinsic|wont_fix","type","description","to_reach_100"}]}`
 
-**La boucle** : panel ∝ régime (table du socle) ; re-vote à chaque itération (re-audit, pas re-lecture).
-**Coût (hors critical)** : panel ESCALADANT (cœur de 2 = Faithful + Real-effect, escalade sur signal — major
-surfacé / pivot inquiet / diff touchant la dim) · [F] grunts en modèle CHEAP, [S] pivots en fort — **et DIVERSIFIER pour décorréler** : varier modèle/température entre sièges ([F] répartis sur ≥2 modèles si ≥4 tirent ; les 2 tirages [S] à températures distinctes 0.0/0.7 ou checkpoints ≠ ; même-modèle+même-température = corrélation maximale) · doubler le
-SEUL pivot top en standard (tous les [S] seulement en critical) · digest partagé lu UNE fois (pas N re-lectures).
-Critical = full panel + doublé + fort d'emblée, PAS d'escalade (on paie la couverture là où c'est irréversible).
-**Arrêts** : ROI-stop (disposable/standard : zéro-majeur atteint → stop, pas de re-panel cosmétique) ·
-**intrinsèque-tôt** (≥1 majeur `nature:intrinsic` dès le cycle 1 → MODE DÉGRADÉ immédiat, ne PAS attendre le
-cap : le renvoyer au producteur = whack-a-mole, il ne peut pas le corriger) · **cap-coût** (audits cumulés
-≥ ~15 ET delta min-global <5 sur 2 transitions → ROI-stop forcé même hors zéro-majeur) · **bannière coût
-avant relance** (kaizen 2026-06-18 : relancer une boucle coûteuse au tour N≥2 avec delta négatif, OU après
-avoir déjà recommandé l'arrêt → AFFICHER « run #N, ~XM tokens cumulés, delta −Y » AVANT de relancer ; le coût
-doit être VISIBLE sinon l'humain ne peut pas exercer son autorité d'arrêt — jamais auto-mute « sans insister ») · caps (≈3 standard —
-un majeur vivant au cap = sous-classification, re-hausser ; 5 critical) · stagnation (min global plat sur 2
-transitions) · régression tournante · conflit de conception → **hard-stop humain en MODE DÉGRADÉ** : sort du
-livrable + 2-4 options chiffrées + rien-sans-OK. **Fallback sans sous-agents** : juger
-séquentiellement en changeant de lentille (ledger gardé) ; [S] mono-passe = « vote dégradé » ; jamais
-l'auto-évaluation du producteur.
+**The loop**: panel ∝ regime (foundation table); re-vote at each iteration (re-audit, not re-reading).
+**Cost (outside critical)**: ESCALATING panel (core of 2 = Faithful + Real-effect, escalates on signal — major
+surfaced / worried pivot / diff touching the dim) · [F] grunts in CHEAP model, [S] pivots in strong — **and DIVERSIFY to decorrelate**: vary model/temperature across seats ([F] spread over ≥2 models if ≥4 draw; the 2 [S] draws at distinct temperatures 0.0/0.7 or different checkpoints; same-model+same-temperature = maximum correlation) · double the
+SINGLE top pivot in standard (all [S] only in critical) · shared digest read ONCE (not N re-reads).
+Critical = full panel + doubled + strong from the start, NO escalation (we pay for coverage where it is irreversible).
+**Stops**: ROI-stop (disposable/standard: zero-major reached → stop, no cosmetic re-panel) ·
+**intrinsic-early** (≥1 major `nature:intrinsic` from cycle 1 → DEGRADED MODE immediately, do NOT wait for the
+cap: sending it back to the producer = whack-a-mole, they cannot fix it) · **cost-cap** (cumulative audits
+≥ ~15 AND global-min delta <5 over 2 transitions → forced ROI-stop even without zero-major) · **cost banner
+before relaunch** (kaizen 2026-06-18: relaunching a costly loop at turn N≥2 with a negative delta, OR after
+having already recommended stopping → DISPLAY "run #N, ~XM cumulative tokens, delta −Y" BEFORE relaunching; cost
+must be VISIBLE otherwise the human cannot exercise stop-authority — never self-mute it) · caps (≈3 standard —
+a live major at cap = mis-classification, re-escalate; 5 critical) · stagnation (global min flat over 2
+transitions) · rotating regression · design conflict → **human hard-stop in DEGRADED MODE**: deliverable output + 2-4 costed options + nothing-without-OK. **Fallback without sub-agents**: judge
+sequentially by changing lens (ledger kept); [S] single-pass = "degraded vote"; never the producer's
+self-assessment.
 
-**🐤 Canari (critical : systématique · standard : ÉCHANTILLONNÉ)** : avant de croire un vert de panel — défaut planté dans une copie, panel
-dessus d'abord ; aucun juge ne le voit → ensemble « aveugle aujourd'hui » → verts non-conclusifs (INVALID) → **ré-escalade FORCÉE** (re-hausser d'un régime : standard→critical, ou hard-stop humain si déjà critical ; jamais juste logguer et continuer),
-log `CANARY-BLIND`. **En standard, ÉCHANTILLONNER** : déclencher au moins sur (a) une fois par work-item, tracé dans RUN.md `## Défauts` (état persistant ré-lu au Prélude — sans log, la condition « type nouveau » n'est pas exécutable d'un contexte vierge à l'autre) et (b) quand les 2 tirages [S] s'accordent à <5 (corrélation suspecte). Mesure la corrélation au lieu de la supposer absente. **Toute passe standard SANS canari DOIT porter le marqueur « blind spot not excluded » (silence ≠ sûreté).**
+**🐤 Canary (critical: systematic · standard: SAMPLED)**: before trusting a panel green — defect planted in one copy, panel
+runs on it first; no judge sees it → ensemble "blind today" → non-conclusive greens (INVALID) → **FORCED re-escalation** (escalate one regime: standard→critical, or human hard-stop if already critical; never just log and continue),
+log `CANARY-BLIND`. **In standard, SAMPLE**: trigger at least on (a) once per work-item, traced in RUN.md `## Défauts` (persistent state re-read at Prelude — without a log, the "new type" condition is not executable from a fresh context to another) and (b) when the 2 [S] draws agree within <5 (suspicious correlation). Measures correlation instead of assuming it absent. **Any standard pass WITHOUT a canary MUST carry the marker "blind spot not excluded" (silence ≠ safety).**
 
-**Livrables-skills** : test de déclenchement (routeur en contexte vierge, devrait/ne-devrait-pas) + 1 run
-réel ; re-test après TOUTE édition ; cross-refs résolues. **Revue de diff** avant intégration : surface ∝
-besoin, pas de hors-scope, pas de code mort/debug, pas de secrets, pas de reformatage parasite.
+**Skill deliverables**: trigger test (router in fresh context, should/should-not) + 1 real run;
+re-test after ANY edit; cross-refs resolved. **Diff review** before integration: surface ∝
+need, no out-of-scope, no dead/debug code, no secrets, no spurious reformatting.
 
-## Ch.3 — RUN, détails *(sert aux runs standard/critical ; le socle §1-2 suffit au quotidien)*
+## Ch.3 — RUN, details *(used for standard/critical runs; foundation §1-2 is enough for daily work)*
 
-**Sections** (single-writer : l'orchestrateur seul écrit ; les sous-agents rendent du JSON typé → événements) :
-`## Besoin` (deep-why, scope in/out, critère de succès, décisions délibérées) · `## Options` (≥3 scorées +
-`Décision:`) · `## Journal` (append-only : `[ts] unit=<id> run=<stamp> VERIFIED|FAILED|FLAKY|CLAIM|PROOF|USER-OK`) ·
-`## Défauts` (le ledger du juge) · `## Reprise` (Goal/Hypothesis/Tried/Next/Blockers + compteurs) ·
-`## Cicatrices` (leçons du run — volatiles à l'HYPOTHÈSE) · `## Checks` (`check: <commande>` — socle §6).
+**Sections** (single-writer: the orchestrator alone writes; sub-agents return typed JSON → events):
+`## Besoin` (deep-why, scope in/out, success criterion, deliberate decisions) · `## Options` (≥3 scored +
+`Décision:`) · `## Journal` (append-only: `[ts] unit=<id> run=<stamp> VERIFIED|FAILED|FLAKY|CLAIM|PROOF|USER-OK`) ·
+`## Défauts` (the judge's ledger) · `## Reprise` (Goal/Hypothesis/Tried/Next/Blockers + counters) ·
+`## Cicatrices` (run lessons — volatile to HYPOTHESIS) · `## Checks` (`check: <command>` — foundation §6).
 
-**Discipline** : `green` UNIQUEMENT après vérification réelle du signal — jamais pour satisfaire le gate (il
-rejoue). `degraded-closed` = clôture honnête sans vert, **USER-OK tracé au Journal** (contrainte d'honneur —
-le gate passe, la review vérifie). **FLAKY de 1ʳᵉ classe** : un signal qui flippe entre re-runs est journalisé
-FLAKY, listé au récap, jamais absorbé en vert, n'arme jamais un fix. **Confirmer-la-couleur** : re-run de
-confirmation avant tout pivot ou clôture. **Idempotence** : clés `unit+run` au Journal — un redispatch ne
-double-applique pas ; les commits restent hors zone parallèle (apply série post-barrière). **Multi-workspace** :
-un RUN parent reste open tant que TOUS les enfants ne sont pas verts ET l'intégration vérifiée. **Reprise** :
-header + `## Reprise` + ~10 derniers événements (~30 s).
+**Discipline**: `green` ONLY after real signal verification — never to satisfy the gate (it
+replays). `degraded-closed` = honest closure without a green, **USER-OK traced in the Journal** (honor constraint —
+the gate passes, the review verifies). **First-class FLAKY**: a signal that flips between re-runs is journaled
+FLAKY, listed in the recap, never absorbed as green, never arms a fix. **Confirm-the-color**: confirmation re-run
+before any pivot or closure. **Idempotence**: `unit+run` keys in the Journal — a redispatch does not
+double-apply; commits stay outside the parallel zone (apply series post-barrier). **Multi-workspace**:
+a parent RUN stays open as long as ALL children are not green AND integration is verified. **Resume**:
+header + `## Reprise` + ~10 last events (~30 s).
 
 ---
 
-## Ch.4 — BUILD *(sert pendant l'exécution — entre `terrain` et `judge` ; c'est l'EXÉCUTANT qui le consulte, aucune skill ne se déclenche à cette phase)*
+## Ch.4 — BUILD *(used during execution — between `terrain` and `judge`; the EXECUTOR consults it, no skill fires during this phase)*
 
-**Plan = incréments porteurs de signal.** Décomposer en **plus petits pas VÉRIFIABLES**, chacun annoté
-`{but, signal propre (câblé par terrain), independent | depends-on-X}` ; dépendances d'abord, part
-indépendante maximisée délibérément. Le plan vit dans le RUN (`## Reprise` + Journal), pas dans un fichier
-à part. Relire la `Décision:` avant de commencer — on exécute l'option choisie, pas une autre.
+**Plan = signal-bearing increments.** Decompose into **smallest VERIFIABLE steps**, each annotated
+`{goal, own signal (wired by terrain), independent | depends-on-X}`; dependencies first, independent part
+maximized deliberately. The plan lives in the RUN (`## Reprise` + Journal), not in a separate file.
+Re-read the `Décision:` before starting — execute the chosen option, not another.
 
-**Rouge d'abord** *(le contrôle négatif appliqué au build)* : quand le signal d'un incrément est un
-test/check exécutable, l'écrire AVANT d'implémenter et le VOIR ÉCHOUER — un check qui n'a jamais été rouge
-ne prouve rien (il peut tester le vide ; cicatrice « fixture trop propre »). Puis implémenter jusqu'au
-vert, puis re-runner la suite touchée. Ne JAMAIS modifier un test pour le faire passer.
-**Couverture adverse sur SON propre fix (kaizen 2026-06-18)** : un test que TU as écrit qui passe prouve le
-chemin heureux, PAS l'absence de la classe de bug — pour un fix de frontière/discriminant, NOMME un input qui
-DEVRAIT faire échouer le test et confirme qu'il échoue (mutation) ; sinon = « couverture non vérifiée », pas
-vert (vécu : un fix faux-green a ré-introduit un faux-green dans sa propre zone morte, attrapé par le judge —
-pas par mes 3 tests auto-écrits).
+**Red first** *(the negative control applied to the build)*: when the signal of an increment is an
+executable test/check, write it BEFORE implementing and SEE IT FAIL — a check that was never red
+proves nothing (it may be testing a vacuum; scar "overly clean fixture"). Then implement to
+green, then re-run the touched suite. NEVER modify a test to make it pass.
+**Adversarial coverage on YOUR OWN fix (kaizen 2026-06-18)**: a test YOU wrote that passes proves the
+happy path, NOT the absence of the bug class — for a boundary/discriminant fix, NAME an input that
+SHOULD make the test fail and confirm it fails (mutation); otherwise = "coverage unverified", not
+green (lived: a false-green fix reintroduced a false-green in its own dead zone, caught by the judge —
+not by my 3 self-written tests).
 
-**La boucle d'incrément** : implémenter → vérifier par le SIGNAL RÉEL (jamais du texte auto-jugé) →
-rouge ? diagnostiquer puis fixer → re-vérifier → journaliser (`unit=… VERIFIED|FAILED|FLAKY`) → suivant.
-**Cadence anti-régression** : à chaque incrément vert, re-vérifier les acquis ADJACENTS (pas seulement à
-la fin) ; deux incréments qui se cassent mutuellement 2× = conflit de conception → remonter, pas boucler.
+**The increment loop**: implement → verify via the REAL SIGNAL (never self-judged text) →
+red? diagnose then fix → re-verify → journal (`unit=… VERIFIED|FAILED|FLAKY`) → next.
+**Anti-regression cadence**: at each green increment, re-verify ADJACENT wins (not only at
+the end); two increments that break each other 2× = design conflict → escalate, do not loop.
 
-**Dispatch parallèle** : les incréments indépendants partent en sous-agents EN PARALLÈLE (un seul
-message) ; chaque sous-agent rend du JSON typé (jamais de la prose à re-parser) ; l'orchestrateur SEUL
-écrit le RUN (single-writer, ch.3) ; mutations de fichiers concurrentes → isolation par agent
-(worktree/scratch) ; ressource exclusive (build/DB/banc/port) → un seul propriétaire ; applys/commits en
-SÉRIE post-barrière.
+**Parallel dispatch**: independent increments go to sub-agents IN PARALLEL (one single
+message); each sub-agent returns typed JSON (never prose to re-parse); the orchestrator ALONE
+writes the RUN (single-writer, ch.3); concurrent file mutations → agent isolation
+(worktree/scratch); exclusive resource (build/DB/bench/port) → one owner only; applies/commits in
+SERIES post-barrier.
 
-**Debugging systématique** *(sur échec inattendu — avant tout fix)* : reproduire MINIMALEMENT → poser ≥2
-hypothèses DISTINCTES → **AVANT de coder le 1er fix, surtout sur une couche système/plateforme
-(rendu/DWM/desktop/focus/IPC/capture/OS) ou une cause inconnue : une passe de RECHERCHE prior-art (doc
-officielle / issues / web, cap court). Un fix codé sans cause CITABLE = un coup de dé — et la limite est
-souvent DÉJÀ documentée** → instrumenter pour DISCRIMINER avant de toucher au code → fixer la CAUSE, pas le
-symptôme → promouvoir la leçon en code (`check:` / test de régression). **Cap-coût : un essai empirique
-(édit+build+run) coûte plus qu'une recherche → 2ᵉ fix aveugle sur cause inconnue = STOP code, RECHERCHE
-d'abord (l'humain coûte autant qu'un essai : chercher AVANT d'escalader) ; 3 fixes échoués → résolveurs
-parallèles à hypothèses orthogonales.** **Anti-dérive de diagnostic : la cause-racine qui CHANGE ≥2× dans un
-run → STOP, publier {hypothèse retenue · preuve hors-modèle qui l'ancre · hypothèses écartées} et faire
-VALIDER avant de repartir — sinon c'est l'user qui devient ton falsificateur.**
+**Systematic debugging** *(on unexpected failure — before any fix)*: reproduce MINIMALLY → form ≥2
+DISTINCT hypotheses → **BEFORE coding the 1st fix, especially on a system/platform layer
+(rendering/DWM/desktop/focus/IPC/capture/OS) or an unknown cause: a prior-art RESEARCH pass (official
+docs / issues / web, short cap). A fix coded without a CITABLE cause = a dice roll — and the limit is
+often ALREADY documented** → instrument to DISCRIMINATE before touching the code → fix the CAUSE, not the
+symptom → promote the lesson to code (`check:` / regression test). **Cost cap: one empirical trial
+(edit+build+run) costs more than research → 2nd blind fix on unknown cause = STOP code, RESEARCH
+first (the human costs as much as one trial: search BEFORE escalating); 3 failed fixes → parallel resolvers with orthogonal hypotheses.** **Anti-diagnostic-drift: root cause that CHANGES ≥2× in a
+run → STOP, publish {retained hypothesis · out-of-model proof that anchors it · discarded hypotheses} and get
+it VALIDATED before resuming — otherwise the user becomes your falsifier.**
 
-**Checkpoint vert + rollback** : avant chaque incrément risqué, un vert NOMMÉ restaurable (commit/tag —
-worktree jetable monté par terrain) ; régression CONFIRMÉE (re-run, pas un flake) → revenir au dernier
-vert et ré-attaquer avec une hypothèse DIFFÉRENTE — jamais empiler des fixes sur un état cassé.
+**Green checkpoint + rollback**: before each risky increment, a NAMED restorable green (commit/tag —
+disposable worktree mounted by terrain); CONFIRMED regression (re-run, not a flake) → return to the last
+green and re-attack with a DIFFERENT hypothesis — never stack fixes on a broken state.
 
-*(Ch.4 = l'absorption volontaire de la mécanique d'exécution autrefois déléguée à des skills tierces —
-le moteur est self-contained par décision, 2026-06-10.)*
+*(Ch.4 = the deliberate absorption of the execution mechanics previously delegated to third-party skills —
+the engine is self-contained by design decision, 2026-06-10.)*
 
-## Télémétrie & cadence *(mesure hors-modèle — pas du quotidien)*
-Blocages comptés dans `~/.claude/gate-counters.jsonl` par les hooks — la TENDANCE mesure la discipline, pas
-l'auto-rapport. Périodique : audit comportemental (Mode B) · consolidation mémoire (péremption/conflit/dedup) ·
-re-baseline au bump de modèle (trigger-tests + calibration des juges).
+## Telemetry & cadence *(out-of-model measurement — not daily use)*
+Blocks counted in `~/.claude/gate-counters.jsonl` by the hooks — the TREND measures discipline, not
+self-reporting. Periodic: behavioral audit (Mode B) · memory consolidation (expiry/conflict/dedup) ·
+re-baseline on model bump (trigger-tests + judge calibration).
 
-## Roadmap (nommée, NON câblée — n'en supposez pas la couverture)
-Held-out anti-Goodhart (critical) · juge-frais sur saturation · plafonds $ réels + token-bucket 429 ·
-A/B pipeline-vs-nu sur cas réel · promotion-leçon mécanique par hook.
+## Roadmap (named, NOT wired — do not assume coverage)
+Held-out anti-Goodhart (critical) · fresh-judge on saturation · real $ caps + token-bucket 429 ·
+A/B pipeline-vs-bare on real case · mechanical lesson-promotion by hook.

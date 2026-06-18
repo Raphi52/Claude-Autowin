@@ -1,39 +1,39 @@
-<!-- RUN-template.md — copie ce fichier en Audit\workspaces\<session_id>\<sujet>-workspace\RUN.md
-     (<session_id> = injecte chaque tour par le hook UserPromptSubmit ; UN folder par session ; le Stop-gate
-     v3.2 n'enforce QUE les runs de SA session). Fallback : chemin plat si pas de session_id.
-     Convention complete : _engine/ENGINE.md ch.3.
-     Le Stop hook lit le header : open/red bloquent la fin de tour ; green est REJOUE, pas cru. -->
+<!-- RUN-template.md — copy this file to Audit\workspaces\<session_id>\<sujet>-workspace\RUN.md
+     (<session_id> = injected each turn by the UserPromptSubmit hook; ONE folder per session; Stop-gate
+     v3.2 enforces ONLY the runs of its own session). Fallback: flat path if no session_id.
+     Full convention: _engine/ENGINE.md ch.3.
+     The Stop hook reads the header: open/red block end-of-turn; green is REPLAYED, not trusted at face value. -->
 status: open
-session: <session_id>       <!-- scope du run a cette session (sinon l'emplacement <session_id>\ fait foi) -->
-regime: standard            <!-- disposable | standard | critical — la molette d'effort -->
-signal: <l'artefact HORS-modele qui prouvera le vert — ex : "test-x.ps1 exit 0", "capture lue", "requete SQL n>0">
-signal-cmd: <optionnel mais puissant — commande IDEMPOTENTE que le gate REJOUERA via cmd /c, prefixes
-  whitelistes : dotnet test | dotnet build | cmd /c | powershell -NoProfile -File | powershell -File —
-  QUOTE tout chemin contenant des espaces, et execute-la une fois TOI-MEME avant de la declarer>
-signal-attestable: <optionnel — preuve hors-modele NON rejouable (ex : "capture lue + run-stamp", "requete SQL
-  n>0 lue") ; en regime CRITICAL, satisfait l'exigence de preuve quand il n'y a ni signal-cmd ni check:>
-gate: on                    <!-- on (defaut) | off — opt-out pour un run jetable : le Stop hook saute TOUT le gate si 'off' apparait dans les 14 premieres lignes (cf. stop-gate.ps1) -->
+session: <session_id>       <!-- scopes the run to this session (otherwise the <session_id>\ location is authoritative) -->
+regime: standard            <!-- disposable | standard | critical — the effort dial -->
+signal: <the OUT-OF-MODEL artifact that will prove green — e.g. "test-x.ps1 exit 0", "capture read", "SQL query n>0">
+signal-cmd: <optional but powerful — IDEMPOTENT command the gate will REPLAY via cmd /c; whitelisted prefixes:
+  dotnet test | dotnet build | cmd /c | powershell -NoProfile -File | powershell -File —
+  QUOTE any path containing spaces, and run it yourself once before declaring it>
+signal-attestable: <optional — non-replayable out-of-model proof (e.g. "capture read + run-stamp", "SQL query
+  n>0 read"); in CRITICAL regime, satisfies the proof requirement when there is neither signal-cmd nor check:>
+gate: on                    <!-- on (default) | off — opt-out for a throwaway run: the Stop hook skips the ENTIRE gate if 'off' appears in the first 14 lines (cf. stop-gate.ps1) -->
 
 ## Besoin
-**Deep-why** : <le probleme reel, pas la solution demandee>
-**Scope IN** : <ce qui est couvert> / **Scope OUT** : <ce qui ne l'est pas, et pourquoi>
-**Critere de succes verifiable** : <comment on SAURA que c'est fini>
-**Decisions deliberees** : <choix volontaires que la review ne doit pas re-flaguer>
-**Hypotheses annoncees** : <"je pars du principe que X (fait : ...) — corrige">
+**Deep-why** : <the real problem, not the solution requested>
+**Scope IN** : <what is covered> / **Scope OUT** : <what is not, and why>
+**Critere de succes verifiable** : <how we will KNOW it is done>
+**Decisions deliberees** : <deliberate choices the review should not re-flag>
+**Hypotheses annoncees** : <"I am assuming X (fact: ...) — correct me">
 
 ## Options
-<!-- si un choix d'approche est ENGAGE : >=3 options REELLEMENT distinctes scorees + ligne Décision:
-     (le gate verifie a la cloture ; des options-paille = defaut que le judge flague) -->
+<!-- if an approach choice is ENGAGED: >=3 GENUINELY distinct scored options + Décision: line
+     (the gate checks at closure; strawman options = a defect the judge will flag) -->
 - Option A — <desc> score: NN
 - Option B — <desc> score: NN
 - Option C — <desc> score: NN
-Décision: <laquelle et pourquoi>
+Décision: <which one and why>
 
 ## Journal
 <!-- append-only : [ts] unit=<id> run=<stamp> VERIFIED|FAILED|FLAKY|CLAIM|PROOF|USER-OK -->
 
 ## Défauts
-<!-- ledger du judge : [gravite, statut] description — jamais efface, resolu ou accepte-avec-raison -->
+<!-- judge ledger: [severity, status] description — never erased, resolved or accepted-with-reason -->
 
 ## Reprise
 Goal:
@@ -43,7 +43,7 @@ Next:
 Blockers:
 
 ## Cicatrices
-<!-- lecons du run (volatiles -> a l'HYPOTHESE) ; promouvoir en check: ou en memoire quand durables (ENGINE ch.3) -->
+<!-- lessons from the run (volatile -> treat as HYPOTHESIS); promote to check: or memory when durable (ENGINE ch.3) -->
 
 ## Checks
-<!-- lecons promues en code, EXECUTEES par le gate a chaque cloture : check: <commande exit!=0 = bloque> -->
+<!-- lessons promoted to code, EXECUTED by the gate at every closure: check: <command exit!=0 = blocks> -->

@@ -8,7 +8,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 
 ---
 
-## 🔄 UPDATE — already have a previous version? — dis à ton Claude : « mets à jour le kit »
+## 🔄 UPDATE — already have a previous version? — just tell your Claude: "update the kit"
 
 > Claude: if `%USERPROFILE%\.claude\skills\frame` (or older-generation skills like `define-need` /
 > `review-work` / `concevoir-boucle-travail`) already exist, this is an **UPDATE**, not a fresh install.
@@ -25,7 +25,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
    any machine-only `## Local` section UNTOUCHED.
 4. **Hooks wiring** — make the `hooks` block in `settings.json` match `hooks\settings-snippet.json`. If the
    entries already exist, leave them; **never duplicate**. Validate the JSON parses.
-5. **What's new in 3.5.0** — durcissement sécurité + hooks (RCE-by-clone fermé, allowlist de preuve, anti-flaky étendu, fail-closed, CI, LICENSE) → détail dans [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
+5. **What's new in 3.5.0** — security + hook hardening (RCE-by-clone closed, proof allowlist, extended anti-flaky, fail-closed, CI, LICENSE) → details in [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
    - **`fixer` skill** — the producer's named fix loop (reproduce → localize → fix → verify red→green → guard
      → loop back to judge). Copy `skills\fixer` (Step 1).
    - **`kaizen` skill** — improve the kit from its OWN failures: locate a failed session / recurrent pattern →
@@ -44,14 +44,14 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
      write RUN.md under `Audit\workspaces\<session_id>\<subject>-workspace\`.
 6. **Reload** — restart Claude Code (hooks + output-style load only at startup).
 7. **Verify** — same pipe-tests as Step 7 below + confirm `VERSION` now reads 3.5.0. (Or run the bundled
-   harness: `powershell -NoProfile -File hooks\test-hooks.ps1` → exit 0 = tous les hooks mordent encore.)
+   harness: `powershell -NoProfile -File hooks\test-hooks.ps1` → exit 0 = all hooks still bite.)
 
 > Check the kit's `VERSION` against what's installed to know the delta. When in doubt, the safe path is
 > simply to re-run the full **INSTALLATION** below — every step already asks before overwriting.
 
 ---
 
-## 🤖 INSTALLATION — dis simplement à ton Claude : « exécute ce README »
+## 🤖 INSTALLATION — just tell your Claude: "execute this README"
 
 > Claude: you are **installing this kit on this machine**. Source files are in **the folder containing this
 > README**. Execute the steps in order, ask before overwriting anything that exists, then give the final recap.
@@ -95,22 +95,23 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 - **Advisory-guard pipe-test**: pipe `{"prompt":"quelle est la meilleure archi"}` into `advisory-guard.ps1`
   → emits an `additionalContext` reminder; `{"prompt":"cree le module"}` → nothing.
 
-**Step 8 — Tell the user how it works** *(en français pour l'utilisateur)*
-- Travail substantiel → le pipeline se déclenche seul : `frame` (le QUOI + quelle approche) → `terrain`
-  (le COMMENT) → build (mécanique d'exécution : ENGINE Ch.4) → `judge` (qualité). `scout` en étape 0 quand
-  la tâche n'est pas choisie ; `fixer` pour résoudre un défaut en vert vérifié. 100 % autonome, aucun plugin.
-- **Stop-gate v3** : Claude ne peut plus clore un tour avec un run ouvert non-vert — un `green` n'est pas cru :
-  le gate REJOUE `signal-cmd` (whitelist idempotente), exécute les `check:` et vérifie l'anti-fixation.
-  Clôture honnête sans vert = `degraded-closed` avec TON accord tracé. Opt-out par run : `gate: off`.
-- **Anti-flaky** : tout sleep brut ≥ 2 s dans du code est refusé — échappatoire : `sleep-ok: <justification>`.
-- **Fix-gate** : une boucle de fix aveugle (mêmes éditions répétées) est refusée sans cause VÉRIFIÉE —
-  échappatoire : `CausalHypothesis:` / `fix-ok:` / `check:` sur une ligne.
-- **Advisory-guard** : une question de conseil ou un signal de frustration (« juste la réponse / rien
-  compris ») te rappelle de répondre DIRECT, pas en pipeline.
-- **Kaizen (auto-PROPOSE, jamais auto-write)** : la télémétrie des blocages récurrents (`gate-counters.jsonl`)
-  déclenche en fin de tour un nudge non-bloquant vers un audit comportemental (judge Mode B) qui PROPOSE une
-  amélioration du kit — TU approuves avant toute écriture. La boucle ne réécrit jamais le kit seule.
-- Compteurs des blocages : `%USERPROFILE%\.claude\gate-counters.jsonl` (la tendance = la vraie mesure).
+**Step 8 — Tell the user how it works**
+- Substantial work → the pipeline triggers automatically: `frame` (the WHAT + which approach) → `terrain`
+  (the HOW) → build (execution mechanics: ENGINE Ch.4) → `judge` (quality). `scout` at step 0 when the task
+  is not yet chosen; `fixer` to resolve a defect to a verified green. 100% autonomous, no plugins.
+- **Stop-gate v3**: Claude can no longer close a turn with an open, non-green run — a `green` is not taken on
+  faith: the gate REPLAYS `signal-cmd` (idempotent allowlist), executes the `check:` lines, and checks the
+  anti-fixation rule. Honest closure without a green = `degraded-closed` with YOUR consent on record. Per-run
+  opt-out: `gate: off`.
+- **Anti-flaky**: any raw sleep ≥ 2 s in code is refused — escape hatch: `sleep-ok: <justification>`.
+- **Fix-gate**: a blind-fix loop (same repeated edits) is refused without a VERIFIED cause — escape hatch:
+  `CausalHypothesis:` / `fix-ok:` / `check:` on a line.
+- **Advisory-guard**: an advisory question or a frustration signal ("just the answer / didn't understand")
+  reminds Claude to answer DIRECTLY, not via the pipeline.
+- **Kaizen (auto-PROPOSE, never auto-write)**: telemetry of recurrent blocks (`gate-counters.jsonl`) triggers
+  a non-blocking Stop nudge toward a behavioral audit (judge Mode B) that PROPOSES a kit improvement — YOU
+  approve before any write. The loop never rewrites the kit on its own.
+- Block counters: `%USERPROFILE%\.claude\gate-counters.jsonl` (the trend is the real measure).
 
 **Step 9 — (OPTIONAL) Readability output-style « Concis-Structure »**
 - The pipeline skills produce verbose output. For scannable answers (BLUF + 1-line steps + closing
@@ -146,7 +147,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 | `hooks\fix-gate.ps1` | refuses blind-fix loops without a verified cause (`CausalHypothesis:`/`fix-ok:`/`check:`) |
 | `hooks\advisory-guard.ps1` | nudge: answer advisory/frustration prompts DIRECTLY, not via the pipeline |
 | `hooks\kaizen-detect.ps1` + `kaizen-nudge.ps1` + `kaizen-revert-log.ps1` | **kaizen auto-PROPOSE loop**: recurrent-failure telemetry → Stop nudge → behavioral audit → PROPOSED diff → human OK (never auto-writes) |
-| `hooks\test-hooks.ps1` | **self-test des hooks** (PARSE/FIRE/SILENT par hook — attrape un fail-open) ; lance-le en CI (`.github/workflows/test-hooks.yml`) ou en `check:` |
+| `hooks\test-hooks.ps1` | **hook self-test** (PARSE/FIRE/SILENT per hook — catches a fail-open); run in CI (`.github/workflows/test-hooks.yml`) or in a `check:` |
 | `hooks\settings-snippet.json` | full hook wiring + economical-model tiering for sub-agents (merge) |
 | `CONSTITUTION.md` | the cardinal reflexes (incl. Advisory hard-gate + kaizen reflexes 14-18), loaded every session |
 | `output-styles\concis-structure.md` | **(optional, Step 9)** scannable response format |

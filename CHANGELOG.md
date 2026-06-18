@@ -1,41 +1,41 @@
 # Changelog
 
-Toutes les évolutions notables du kit. Les versions suivent le fichier `VERSION`.
+All notable changes to the kit. Versions follow the `VERSION` file.
 
 ## 3.5.0 — 2026-06-18
 
-### Sécurité
-- **stop-gate** — le rejeu d'une commande (`signal-cmd:` / `check:`) est désormais **restreint aux `RUN.md`
-  de la session courante** ; en mode *legacy* (pas de session id transmise au hook) **aucun rejeu** n'a lieu.
-  Ferme le vecteur **RCE-by-clone** (un `RUN.md` cloné/étranger ne lance plus de commande). Opt-in mono-poste
-  de confiance : `AUTOWIN_TRUST_REPLAY=1`. Le blocage open/red reste actif (la clôture n'est pas désarmée).
-- Ajout de **`SECURITY.md`** (modèle de confiance, plateforme, canal de divulgation).
+### Security
+- **stop-gate** — command replay (`signal-cmd:` / `check:`) is now **restricted to `RUN.md` files from the
+  current session**; in *legacy* mode (no session id passed to the hook) **no replay occurs**.
+  Closes the **RCE-by-clone** vector (a cloned/foreign `RUN.md` no longer launches commands). Single-trusted-machine opt-in:
+  `AUTOWIN_TRUST_REPLAY=1`. The open/red block remains active (closure is not disarmed).
+- Added **`SECURITY.md`** (trust model, platform, disclosure channel).
 
-### Durcissement des gardes
-- **stop-gate** — preuve en **allowlist** (un vrai runner test/build ou un script) appliquée à `signal-cmd`
-  **+ `check:` + régime critical** : ferme `cmd /c "exit 0"`, `cmd /c call exit 0`, et le `check:` vacant qui
-  certifiait un green *critical*. Whitelist insensible à la casse + `pwsh`, avec word-boundary. **fail-closed**
-  sur stdin illisible **ou non-objet** (scalaire JSON). Lecture des `RUN.md` en UTF-8.
-- **fix-gate** — `fix-gate: off` **ancré** (la prose ne désarme plus) ; `fix-ok:` exige une justification
-  non vide ; le fichier doit être nommé sur une ligne-token ; root projet restauré (guardé par `Test-Path`).
-- **anti-flaky** — couvre `time.sleep` / `setTimeout` / `::Sleep` / alias `sleep` / sleeps **flottants** /
-  séparateur `_` / appel parenthésé (`Start-Sleep([int]5)`).
-- **kaizen-detect** — filtre de fixtures configurable via `KAIZEN_FIXTURE_PATHS`.
+### Guard hardening
+- **stop-gate** — allowlist proof (a real test/build runner or a script) applied to `signal-cmd`
+  **+ `check:` + critical regime**: closes `cmd /c "exit 0"`, `cmd /c call exit 0`, and the empty `check:`
+  that used to certify a *critical* green. Allowlist is case-insensitive + supports `pwsh`, with word-boundary.
+  **fail-closed** on unreadable stdin **or non-object** (JSON scalar). Reads `RUN.md` files as UTF-8.
+- **fix-gate** — `fix-gate: off` is now **anchored** (prose no longer disarms it); `fix-ok:` requires a
+  non-empty justification; the file must be named on a token line; project root restored (guarded by `Test-Path`).
+- **anti-flaky** — covers `time.sleep` / `setTimeout` / `::Sleep` / `sleep` alias / **floating-point** sleeps /
+  `_` separator / parenthesized call (`Start-Sleep([int]5)`).
+- **kaizen-detect** — fixture filter configurable via `KAIZEN_FIXTURE_PATHS`.
 
-### Outils & dépôt
-- **`hooks/test-hooks.ps1`** — harness portable (`$PSScriptRoot`) + couverture étendue (régressions de tous
-  les bypass ci-dessus).
-- **CI** `.github/workflows/test-hooks.yml` — self-test des hooks à chaque push.
+### Tools & repository
+- **`hooks/test-hooks.ps1`** — portable harness (`$PSScriptRoot`) + extended coverage (regressions for all
+  bypass cases above).
+- **CI** `.github/workflows/test-hooks.yml` — self-test of the hooks on every push.
 - `LICENSE` (MIT), `.gitattributes`, `CHANGELOG.md`.
-- `workflows/improve-from-telemetry.js` — boucle d'amélioration pilotée par la télémétrie réelle (portabilisé).
+- `workflows/improve-from-telemetry.js` — improvement loop driven by real telemetry (made portable).
 
-### Limite assumée
-« Commercialisable / parfait » exige une **validation externe** (bêta réels, audit par un autre modèle) hors
-de portée d'une auto-édition. Le redesign *consentement-au-replay* + le scope-session strict côté harnais
-restent sur la roadmap (cf. `SECURITY.md`).
+### Known limit
+"Shippable / perfect" requires **external validation** (real beta users, audit by another model) —
+out of scope for self-editing. The *replay-consent* redesign + strict session-scoping on the harness
+side remain on the roadmap (see `SECURITY.md`).
 
 ## 3.4.0
 
-- Skills `fixer` (boucle producteur) + `kaizen` (amélioration du kit depuis ses échecs).
-- Hook `fix-gate` (anti blind-fix loop) ; système kaizen (`detect` / `nudge` / `revert-log`) ; `advisory-guard`.
-- stop-gate v3.2 — scope par session (sessions concurrentes ne se cross-bloquent plus).
+- Skills `fixer` (producer loop) + `kaizen` (improve the kit from its own failures).
+- Hook `fix-gate` (anti blind-fix loop); kaizen system (`detect` / `nudge` / `revert-log`); `advisory-guard`.
+- stop-gate v3.2 — per-session scoping (concurrent sessions no longer cross-block each other).

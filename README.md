@@ -1,98 +1,98 @@
-# Autowin — un système de travail auto-correctif pour Claude Code
+# Autowin — a self-correcting work system for Claude Code
 
 [![test-hooks](https://github.com/Raphi52/Claude-Autowin/actions/workflows/test-hooks.yml/badge.svg)](https://github.com/Raphi52/Claude-Autowin/actions/workflows/test-hooks.yml) · [MIT](LICENSE) · [CHANGELOG](CHANGELOG.md) · [SECURITY](SECURITY.md)
 
-> Un pipeline de *skills* + des garde-fous déterministes qui déplacent l'**autorité de clôture HORS du
-> modèle** : un « c'est vert » n'est pas cru, il est **rejoué**. Producteur et juge sont le même modèle →
-> aucun « 100 » auto-attribué ne fait preuve. Le dernier filet, c'est l'humain.
+> A pipeline of *skills* + deterministic guardrails that move **closure authority OUTSIDE the
+> model**: a "it's green" claim is never taken at face value — it is **replayed**. Producer and judge are the
+> same model → no self-awarded "100" constitutes proof. The last line of defense is the human.
 
-**Version : 3.5.0** · 100 % autonome, **aucun plugin** · Windows / PowerShell.
+**Version: 3.5.0** · 100% self-contained, **no plugins** · Windows / PowerShell.
 
-> ⚠️ **Sécurité & portée** — les hooks **exécutent des commandes** lues dans les `RUN.md` (`signal-cmd:` / `check:`) à la clôture pour vérifier un « vert » hors-modèle : n'utilise ce kit que dans des **projets de confiance** (un `RUN.md` cloné = entrée non fiable). La couche de garde est **Windows/PowerShell uniquement** (les skills + la constitution sont portables, pas les hooks). Détail : [`SECURITY.md`](SECURITY.md).
+> ⚠️ **Security & scope** — hooks **execute commands** read from `RUN.md` files (`signal-cmd:` / `check:`) at closure time to verify a "green" state outside the model: only use this kit in **trusted projects** (a cloned `RUN.md` is an untrusted input). The guardrail layer is **Windows/PowerShell only** (skills + the constitution are portable; hooks are not). Details: [`SECURITY.md`](SECURITY.md).
 
-**Prérequis** : **Claude Code** (CLI / desktop / IDE) · **Windows** + **PowerShell 5.1+** (les hooks sont des `.ps1`) · un dossier de projet comme `cwd`. *macOS/Linux : les skills + la constitution se chargent, mais les hooks — la couche de garde — ne se déclenchent pas.*
+**Prerequisites**: **Claude Code** (CLI / desktop / IDE) · **Windows** + **PowerShell 5.1+** (hooks are `.ps1` files) · a project folder as `cwd`. *macOS/Linux: skills + the constitution load fine, but hooks — the guardrail layer — do not fire.*
 
 ---
 
-## L'idée
+## The idea
 
-Un agent qui s'auto-évalue dérive : il certifie « fait » sur du texte, vise la perfection hors-sujet,
-ré-écrit ses propres règles sur un mauvais diagnostic. Autowin met les décisions critiques **dans du code
-déterministe** (des hooks) et **chez l'humain** — jamais dans le seul jugement du modèle.
+An agent that self-evaluates drifts: it certifies "done" on text alone, chases off-topic perfection,
+rewrites its own rules on a faulty diagnosis. Autowin puts critical decisions **in deterministic code**
+(hooks) and **with the human** — never in the model's judgment alone.
 
-- Un travail = **un fichier `RUN.md`** (besoin, options, journal, défauts, signal de clôture).
-- Le **stop-gate** bloque la fin de tour tant qu'un run n'est pas `green` *vérifié* : il **rejoue** le
-  `signal-cmd` (build/test), exécute les lignes `check:`, et refuse l'anti-fixation. Pas d'artefact → statut
-  honnête « auto-déclaré, non vérifié » ; clôture sans vert = `degraded-closed` avec ton accord tracé.
+- One work item = **one `RUN.md` file** (need, options, journal, defects, closure signal).
+- The **stop-gate** blocks end-of-turn until a run is *verified* `green`: it **replays** the
+  `signal-cmd` (build/test), runs every `check:` line, and rejects anti-fixation. No artifact → honest
+  status "self-declared, unverified"; closing without green = `degraded-closed` with your explicit sign-off traced.
 
-## Le pipeline (6 skills + moteur)
+## The pipeline (6 skills + engine)
 
-| Skill | Rôle |
+| Skill | Role |
 |---|---|
-| `scout` | faire émerger les candidats d'amélioration sur une cible (table scorée) |
-| `frame` | cadrer le **BESOIN** (le QUOI), puis — si le choix est ouvert — les **OPTIONS** d'approche |
-| `terrain` | le **COMMENT** : préparer une boucle autonome observable (harnais) |
-| `fixer` | résoudre **UN** défaut jusqu'au vert vérifié (rouge d'abord → vert → garde anti-régression) |
-| `judge` | revue **adverse externe**, multi-lentilles décorrélées, jusqu'au seuil du régime |
-| `kaizen` | améliorer le kit depuis **SES propres échecs** → PROPOSE → OK humain → intègre |
-| `_engine/ENGINE.md` | les mécaniques canoniques partagées (THE CORE = 7 concepts ; le reste = référence par régime) |
+| `scout` | surface improvement candidates on a target (scored table) |
+| `frame` | define the **NEED** (the WHAT), then — if the choice is open — the **approach OPTIONS** |
+| `terrain` | the **HOW**: prepare an observable autonomous loop (harness) |
+| `fixer` | resolve **ONE** defect through to verified green (red first → green → regression guard) |
+| `judge` | **adversarial external** review, uncorrelated multi-lens, up to the regime threshold |
+| `kaizen` | improve the kit from **its own failures** → PROPOSE → human OK → integrate |
+| `_engine/ENGINE.md` | shared canonical mechanics (THE CORE = 7 concepts; the rest = regime reference) |
 
-Chaîne : **scout → frame → terrain → build → judge** (`fixer` sur un défaut ; `kaizen` sur un échec récurrent).
+Chain: **scout → frame → terrain → build → judge** (`fixer` for a defect; `kaizen` for a recurring failure).
 
-## Les garde-fous (autorité de clôture déterministe — `hooks/`)
+## The guardrails (deterministic closure authority — `hooks/`)
 
-| Hook | Ce qu'il garantit |
+| Hook | What it enforces |
 |---|---|
-| `stop-gate.ps1` | un `green` est **rejoué / vérifié**, jamais cru ; run ouvert ou rouge → fin de tour bloquée |
-| `anti-flaky.ps1` | refuse les `sleep` bruts dans le code (échappatoire : `sleep-ok: <raison>`) |
-| `fix-gate.ps1` | refuse une boucle de fix aveugle sans cause vérifiée (`CausalHypothesis:` / `fix-ok:` / `check:`) |
-| `advisory-guard.ps1` | rappelle de répondre **DIRECT** à une question de conseil / un signal de frustration (pas en pipeline) |
-| `kaizen-detect` + `kaizen-nudge` + `kaizen-revert-log` | télémétrie des blocages récurrents → nudge → audit comportemental → **diff PROPOSÉ** → OK humain (**jamais d'auto-write**) |
+| `stop-gate.ps1` | a `green` is **replayed / verified**, never trusted; open or red run → end-of-turn blocked |
+| `anti-flaky.ps1` | rejects raw `sleep` calls in code (escape hatch: `sleep-ok: <reason>`) |
+| `fix-gate.ps1` | rejects a blind fix loop without a verified cause (`CausalHypothesis:` / `fix-ok:` / `check:`) |
+| `advisory-guard.ps1` | reminds Claude to answer **DIRECTLY** on advisory questions / frustration signals (not via pipeline) |
+| `kaizen-detect` + `kaizen-nudge` + `kaizen-revert-log` | telemetry on recurring blockers → nudge → behavioral audit → **PROPOSED diff** → human OK (**never auto-write**) |
 
-`hooks/test-hooks.ps1` vérifie chaque hook hors-modèle (parse / déclenche / silencieux sur le contrôle négatif).
+`hooks/test-hooks.ps1` verifies every hook out-of-model (parse / fires / silent on negative control).
 
-## Démo — le gate en action
+## Demo — the gate in action
 
 ```text
-# Claude tente de clore un tour avec ce RUN.md :
+# Claude attempts to close a turn with this RUN.md:
 status: green
 regime: standard
 signal-cmd: dotnet test
-# → le stop-gate REJOUE `dotnet test`. Rouge ? la fin de tour est BLOQUÉE :
+# → the stop-gate REPLAYS `dotnet test`. Fails? End-of-turn is BLOCKED:
 {"decision":"block","reason":"STOP-GATE : ... green NON VERIFIE -> REJEU signal-cmd ECHOUE"}
-# Vert seulement quand l'artefact passe pour de vrai. Un signal vacant (cmd /c exit 0) est refusé,
-# et une commande d'un RUN.md cloné/non-attribué n'est JAMAIS exécutée (cf. SECURITY.md).
+# Green only when the artifact genuinely passes. A vacuous signal (cmd /c exit 0) is rejected,
+# and a command from a cloned/unattributed RUN.md is NEVER executed (see SECURITY.md).
 ```
 
-Vérifie l'install toi-même : `powershell -NoProfile -File hooks\test-hooks.ps1` → `0 echec` = tous les hooks mordent.
+Verify the install yourself: `powershell -NoProfile -File hooks\test-hooks.ps1` → `0 echec` = all hooks bite.
 
 ## Installation
 
-Pose ce dépôt sur la machine, ouvre Claude Code **dans le dossier**, et dis-lui simplement :
+Clone this repo onto your machine, open Claude Code **in the folder**, and simply tell it:
 
-> **« exécute le README-INSTALLATION.md »**
+> **"execute README-INSTALLATION.md"**
 
-Il copie les skills + hooks, câble `settings.json` (merge, jamais d'écrasement), ajoute la constitution, puis
-**vérifie chaque hook** par des pipe-tests. Installation complète + mise à jour depuis une version antérieure :
+It copies the skills + hooks, wires `settings.json` (merge, never overwrite), adds the constitution, then
+**verifies every hook** with pipe-tests. Full installation + upgrade from a previous version:
 **[`README-INSTALLATION.md`](README-INSTALLATION.md)**.
 
-## Structure du dépôt
+## Repository structure
 
 ```
 skills/          scout · frame · terrain · fixer · judge · kaizen  + _engine/ENGINE.md
-hooks/           *.ps1 (garde-fous) + settings-snippet.json (câblage) + test-hooks.ps1
-workflows/       improve-from-telemetry.js  (boucle d'amélioration pilotée par la télémétrie réelle)
-output-styles/   concis-structure.md        (format de réponse scannable — optionnel)
-memory/          fiches mémoire kit-génériques de démarrage (optionnel) + MEMORY.md
-CONSTITUTION.md  les réflexes cardinaux, chargés à chaque session
-sync-kit.ps1     propage live (~/.claude) → package en portabilisant les chemins ; -Check = diff
-VERSION          version du kit
-.github/         workflows/test-hooks.yml — CI : self-test des hooks à chaque push
+hooks/           *.ps1 (guardrails) + settings-snippet.json (wiring) + test-hooks.ps1
+workflows/       improve-from-telemetry.js  (improvement loop driven by real telemetry)
+output-styles/   concis-structure.md        (scannable response format — optional)
+memory/          kit-generic starter memory cards (optional) + MEMORY.md
+CONSTITUTION.md  cardinal reflexes, loaded every session
+sync-kit.ps1     propagates live (~/.claude) → package, portabilizing paths; -Check = diff
+VERSION          kit version
+.github/         workflows/test-hooks.yml — CI: hook self-test on every push
 LICENSE · SECURITY.md · CHANGELOG.md · .gitattributes
 ```
 
-## La limite honnête (par design)
+## The honest limit (by design)
 
-Les hooks garantissent la partie **déterministe** ; les réflexes de **jugement** restent probabilistes —
-producteur et juges sont le même modèle, donc aucun score auto-attribué n'est une mesure. Tout vert non
-adossé à un artefact s'annonce « auto-déclaré, non vérifié ». **Le filet final, c'est l'humain.**
+Hooks guarantee the **deterministic** part; **judgment** reflexes remain probabilistic —
+producer and judges are the same model, so no self-awarded score is a measurement. Any green not backed
+by a real artifact is declared "self-declared, unverified". **The final safety net is the human.**
