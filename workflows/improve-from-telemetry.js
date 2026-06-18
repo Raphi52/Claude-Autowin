@@ -10,7 +10,7 @@ export const meta = {
   ],
 }
 
-const KIT = "Cible = LE KIT: skills sous C:\\\\Users\\\\raphael.vilain\\\\.claude\\\\skills\\\\ + hooks PowerShell sous C:\\\\Users\\\\raphael.vilain\\\\.claude\\\\hooks\\\\*.ps1 + routing CLAUDE.md. Philosophie: un-skill-un-job; cloture hors-modele (RUN.md + stop-gate); PROPOSE jamais auto-write. LIS les vrais fichiers, cite file:line."
+const KIT = "Cible = LE KIT: skills sous %USERPROFILE%\\.claude\\\\skills\\\\ + hooks PowerShell sous %USERPROFILE%\\.claude\\\\hooks\\\\*.ps1 + routing CLAUDE.md. Philosophie: un-skill-un-job; cloture hors-modele (RUN.md + stop-gate); PROPOSE jamais auto-write. LIS les vrais fichiers, cite file:line."
 const MUST_KEEP = "Must-keep (un candidat qui viole = penalise): lean / un-skill-un-job ; un producteur/executeur non-negociable ; self-contained ; proportionnel ; cloture = humain + hooks ; honnetete producer=juge. NB: assouplir un GARDE-FOU (gate) est risque -> exiger que le faux-positif soit PROUVE recurrent et que l'assouplissement ne cree pas de fail-open."
 
 const TELE_SCHEMA = { type: 'object', additionalProperties: false, properties: { patterns: { type: 'array', items: { type: 'object', additionalProperties: false, properties: { gate: { type: 'string' }, file: { type: 'string' }, count: { type: 'number' }, kind: { type: 'string' }, behavioral: { type: 'boolean' }, sample_reason: { type: 'string' } }, required: ['gate', 'count', 'sample_reason'] } } }, required: ['patterns'] }
@@ -23,7 +23,7 @@ const JUDGE_SCHEMA = { type: 'object', additionalProperties: false, properties: 
 phase('Telemetry')
 const tele = await agent(
   `Tu lis la TELEMETRIE REELLE des gates du kit. Lance EXACTEMENT :\n` +
-  `  powershell -NoProfile -File C:\\Users\\raphael.vilain\\.claude\\hooks\\kaizen-detect.ps1 -MinCount 2 -SinceDays 30\n` +
+  `  powershell -NoProfile -File %USERPROFILE%\\.claude\\hooks\\kaizen-detect.ps1 -MinCount 2 -SinceDays 30\n` +
   `(il agrege ~/.claude/gate-counters.jsonl en patterns recurrents ; il EXCLUT deja les sessions 'test-' et les chemins C:\\x\\ / C:\\tmp\\ = fixtures de test). Lis AUSSI les ~40 dernieres lignes de ~/.claude/gate-counters.jsonl pour recuperer un 'reason'/'details' d'exemple par gate. ` +
   `Rends patterns = [{gate, file, count, kind, behavioral, sample_reason}] (sample_reason = un exemple de motif de blocage reel). ` +
   `IMPORTANT : ne garde QUE des blocages d'usage REEL ; ecarte tout ce qui pue le dev-du-kit / le test (chemins de fixture, sessions test-). Si apres ce tri il ne reste rien de significatif, retourne patterns: [].`,

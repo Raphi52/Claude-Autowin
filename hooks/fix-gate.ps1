@@ -47,9 +47,13 @@ $cwd = [string]$j.cwd
 $roots = @()
 if ($cwd -and (Test-Path $cwd)) { $roots += (Join-Path $cwd "Audit\workspaces\$sid") }
 $roots += (Join-Path $PWD "Audit\workspaces\$sid")
-# fix (failles scout 2026-06-18) : root machine-specifique 'C:\Code RIG\...' RETIRE (survivait casse a la
-# portabilisation -> resolvait faux hors machine auteur ; relatif joint a $PWD, pas au cwd du harnais).
-# Dedupe (conserve l'ordre : cwd > $PWD)
+# fix (failles scout 2026-06-18b — CORRECTION d'une regression) : le root projet 'C:\Code RIG\...' avait ete
+# RETIRE pour la portabilite, mais il etait LOAD-BEARING : le stdin PreToolUse ne fournit pas toujours $cwd
+# (contrairement au Stop hook) -> sans ce root la discipline ne trouvait AUCUN RUN et bloquait a >=6 sans
+# desarmement possible (vecu ce tour). Il est GUARDED par Test-Path ci-dessous -> inexistant ailleurs = saute,
+# donc ZERO impact distribution. Vraie portabilite = le harnais fournit cwd ; en attendant, on garde le filet.
+$roots += "Audit\workspaces\$sid"
+# Dedupe (conserve l'ordre : cwd > $PWD > projet)
 $roots = $roots | Select-Object -Unique
 $disciplined = $false
 $greenForFile = $false
@@ -60,7 +64,7 @@ foreach ($r in $roots) {
     foreach ($run in $runs) {
         $c = Get-Content $run.FullName -Raw -EA SilentlyContinue
         if (-not $c) { continue }
-        $globalOff = ($c -match '(?im)fix-gate:\s*off')
+        $globalOff = ($c -match '(?im)^\s*fix-gate:\s*off\s*$')   # fix #SB2 (failles scout) : ancre -> 'fix-gate: off' en PROSE ne desarme plus
         $hasCause = ($c -match '(?im)^\s*CausalHypothesis:' -or $c -match '(?im)^\s*check:\s*\S')
         # fix (failles scout 2026-06-18) : le fichier doit etre nomme sur une LIGNE-TOKEN (CausalHypothesis/
         # check/fix-file), pas n'importe ou en prose -> une mention de passage dans le Journal ne desarme plus.

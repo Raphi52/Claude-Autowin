@@ -4,7 +4,9 @@
 > modèle** : un « c'est vert » n'est pas cru, il est **rejoué**. Producteur et juge sont le même modèle →
 > aucun « 100 » auto-attribué ne fait preuve. Le dernier filet, c'est l'humain.
 
-**Version : 3.4.0** · 100 % autonome, **aucun plugin** · Windows / PowerShell.
+**Version : 3.5.0** · 100 % autonome, **aucun plugin** · Windows / PowerShell.
+
+> ⚠️ **Sécurité & portée** — les hooks **exécutent des commandes** lues dans les `RUN.md` (`signal-cmd:` / `check:`) à la clôture pour vérifier un « vert » hors-modèle : n'utilise ce kit que dans des **projets de confiance** (un `RUN.md` cloné = entrée non fiable). La couche de garde est **Windows/PowerShell uniquement** (les skills + la constitution sont portables, pas les hooks). Détail : [`SECURITY.md`](SECURITY.md).
 
 ---
 

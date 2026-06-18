@@ -36,6 +36,10 @@ Check '#7 fix-gate FIRE  (fichier nomme en PROSE seule)' ((Run 'fix-gate.ps1' (J
 @{ 'c:\tmp\x.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
 Set-Content (Join-Path $df 'RUN.md') -Value "status: open`nsession: $sid`nCausalHypothesis: cause X sur x.ps1 (src)" -Encoding utf8
 Check '#7 fix-gate SILENT(fichier sur ligne CausalHypothesis)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\x.ps1'; new_string = 'code' } })) -match 'deny'))
+# REG (failles scout SB2) : 'fix-gate: off' en PROSE (pas une ligne dediee) ne desarme PLUS
+@{ 'c:\tmp\x.ps1' = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content (Join-Path $df 'RUN.md') "status: open`nsession: $sid`nJournal: j ai hesite a mettre fix-gate: off mais finalement non" -Encoding utf8
+Check 'REG fix-gate:off en PROSE -> DENY' ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\x.ps1'; new_string = 'code' } })) -match 'deny')
 Remove-Item -Recurse -Force $df -EA SilentlyContinue
 Remove-Item $st -EA SilentlyContinue
 
@@ -71,6 +75,11 @@ Check 'anti-fixation BLOQUE vraie decision sans 3 options' ((Run 'stop-gate.ps1'
 # fix #1 (failles scout) : signal-cmd VACANT (cmd /c exit 0) ne prouve rien -> BLOCK
 MkRun "status: green`nsession: $sid`nregime: standard`nsignal-cmd: cmd /c exit 0"
 Check '#1 stop-gate BLOQUE (signal-cmd vacant cmd/c exit 0)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+$qq=[char]34
+MkRun "status: green`nsession: $sid`nregime: standard`nsignal-cmd: cmd /c ${qq}exit 0${qq}"
+Check 'REG signal-cmd cmd/c quote exit 0 -> BLOCK' ((Run 'stop-gate.ps1' $sg) -match 'block')
+MkRun "status: green`nsession: $sid`nregime: standard`nsignal-cmd: cmd /c call exit 0"
+Check 'REG signal-cmd cmd/c call exit 0 -> BLOCK' ((Run 'stop-gate.ps1' $sg) -match 'block')
 # REJEU reel via script whiteliste : echoue -> BLOCK ; reussit -> PASSE ; prefixe mal-casse -> PASSE (fix #3)
 $okps1 = Join-Path $tmp 'gate-ok.ps1'; Set-Content $okps1 -Value 'exit 0' -Encoding utf8
 $kops1 = Join-Path $tmp 'gate-ko.ps1'; Set-Content $kops1 -Value 'exit 1' -Encoding utf8
@@ -86,8 +95,11 @@ Check 'stop-gate PASSE (disposable sans preuve)' (-not ((Run 'stop-gate.ps1' $sg
 # critical sans preuve -> block ; avec check:/attestable -> pass
 MkRun "status: green`nsession: $sid`nregime: critical"
 Check 'stop-gate BLOQUE (critical sans preuve)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+MkRun "status: green`nsession: $sid`nregime: critical`ncheck: powershell -NoProfile -File $okps1"
+Check 'stop-gate PASSE (critical + check MEANINGFUL)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# REG (failles scout) : un check VACANT (cmd /c exit 0) ne certifie PLUS un green critical
 MkRun "status: green`nsession: $sid`nregime: critical`ncheck: cmd /c exit 0"
-Check 'stop-gate PASSE (critical + check rejouable)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+Check 'REG critical + check VACANT -> BLOCK' ((Run 'stop-gate.ps1' $sg) -match 'block')
 MkRun "status: green`nsession: $sid`nregime: critical`nsignal-attestable: capture lue + run-stamp"
 Check 'stop-gate PASSE (critical + signal-attestable)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 # re-open : un event unit= APRES GATE-VERIFIED force la re-verif (ici signal vacant -> re-bloque)

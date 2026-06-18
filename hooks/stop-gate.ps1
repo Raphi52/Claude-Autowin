@@ -63,6 +63,19 @@ function Invoke-GateCmd([string]$c) {
     return $p.ExitCode
 }
 
+# fix (failles scout 2026-06-18, ALLOWLIST de preuve) : une PREUVE doit invoquer un vrai runner test/build OU
+# un SCRIPT (.ps1/.cmd/.bat/.py/.js). Le denylist de vacuite fuyait (cmd /c "exit 0" / call / wrapping) ->
+# on exige le positif. Sert a (a) signal-cmd ET (d) la preuve CRITICAL + les check:.
+$script:proofRunners = @('dotnet test', 'dotnet build', 'dotnet run', 'pytest', 'npm test', 'npm run', 'jest', 'go test', 'cargo test', 'msbuild', 'make ')
+function Test-MeaningfulProof([string]$c) {
+    if (-not $c) { return $false }
+    $e = ($c -replace '^(?i)\s*cmd\s+/c\s+', '').Trim().Trim('"').Trim()
+    if ($e -match '(?i)(^|\s)-File\s+\S+\.(ps1|cmd|bat)(\b|$)') { return $true }
+    if ($e -match '(?i)\.(ps1|cmd|bat|py|js)(\s|$)') { return $true }
+    foreach ($r in $script:proofRunners) { if ($e -match ('(?i)^' + [regex]::Escape($r))) { return $true } }
+    return $false
+}
+
 # v3.2 — SCOPE PAR SESSION. On ajoute la racine de session Audit\workspaces\<session_id>\ aux roots scannes
 # (ses runs sont "a moi" par emplacement) ; cwd + Audit\workspaces top-level restent scannes mais seront
 # filtres par appartenance dans la boucle (header session: == mon id). Filet legacy si session_id absent.
@@ -123,11 +136,10 @@ foreach ($d in $wsDirs) {
         $cmdLine = $head | Where-Object { $_ -match '^\s*signal-cmd:' } | Select-Object -First 1
         if ($cmdLine) {
             $cmd = ($cmdLine -replace '^\s*signal-cmd:\s*', '').Trim()
-            # fix #1 (failles scout 2026-06-18) : un signal-cmd VACANT (cmd /c exit 0, echo, rem, ver, cd...)
-            # passe la whitelist mais ne PROUVE rien -> auto-certification du green. On le refuse (non-disposable).
-            $eff = $cmd -replace '^(?i)\s*cmd\s+/c\s+', ''
-            if ($eff -match '^(?i)\s*(exit(\s+/b)?(\s+\d+)?|echo(\s|$)|rem(\s|$)|ver\s*$|cd\s*$|true\s*$|:|type\s+nul)') {
-                $failures += ('signal-cmd VACANT (ne prouve rien) : ' + $cmd + ' -- un signal doit etre un build/test/script reel')
+            # fix (failles scout 2026-06-18, ALLOWLIST) : un signal-cmd present doit PROUVER (runner/script) ;
+            # sinon (cmd /c exit 0, "exit 0", call exit 0, echo...) = ne prouve rien -> BLOCK (non-disposable).
+            if (-not (Test-MeaningfulProof $cmd)) {
+                $failures += ('signal-cmd ne PROUVE rien (ni runner test/build ni script .ps1/.bat/.cmd/.py/.js) : ' + $cmd)
             }
             $white = $false
             foreach ($p in $replayWhitelist) { if ($cmd.StartsWith($p, [System.StringComparison]::OrdinalIgnoreCase)) { $white = $true; break } }
@@ -173,11 +185,15 @@ foreach ($d in $wsDirs) {
     # irreversible, contre ENGINE Ch.2). On BLOQUE ; l'humain ajoute un signal ou clot en degraded-closed.
     if ($regime -eq 'critical') {
         $cmdL2 = $head | Where-Object { $_ -match '^\s*signal-cmd:' } | Select-Object -First 1
-        $cmdWhite = $false
-        if ($cmdL2) { $cc2 = ($cmdL2 -replace '^\s*signal-cmd:\s*', '').Trim(); foreach ($pp in $replayWhitelist) { if ($cc2.StartsWith($pp, [System.StringComparison]::OrdinalIgnoreCase)) { $cmdWhite = $true; break } } }
+        $cmdMeaningful = $false
+        if ($cmdL2) { $cc2 = ($cmdL2 -replace '^\s*signal-cmd:\s*', '').Trim(); $cmdMeaningful = (Test-MeaningfulProof $cc2) }
+        # fix (failles scout 2026-06-18) : un check ne compte comme PREUVE critical que s'il est MEANINGFUL
+        # (un 'check: cmd /c exit 0' vacant ne certifie plus un green critical).
+        $hasMeaningfulCheck = $false
+        foreach ($cl in $checkLines) { if (Test-MeaningfulProof (($cl -replace '^\s*check:\s*', '').Trim())) { $hasMeaningfulCheck = $true; break } }
         $hasAttest = [bool]($head | Where-Object { $_ -match '^\s*signal-attestable:\s*\S' })
-        if (-not ($cmdWhite -or ($checkLines.Count -gt 0) -or $hasAttest)) {
-            $failures += 'CRITICAL sans preuve hors-modele (signal-cmd whiteliste, check:, ou signal-attestable: requis)'
+        if (-not ($cmdMeaningful -or $hasMeaningfulCheck -or $hasAttest)) {
+            $failures += 'CRITICAL sans preuve hors-modele MEANINGFUL (signal-cmd/check = runner test/build ou script, ou signal-attestable: requis)'
         }
     }
 
