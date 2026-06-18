@@ -12,11 +12,9 @@ description: >-
   must be validated BEFORE it is considered done, OR when you want an IMPARTIAL quality look rather than
   the producer's complacent self-assessment. Trigger on "review / audit the QUALITY of X", "review the
   quality", "is this work good?", "validate this deliverable", "is it really done?", "is it up to
-  standard?" ("review/audite la QUALITÉ de X", "est-ce que ce travail est bon ?", "valide ce livrable",
-  "c'est vraiment fini ?"), or right after a substantial deliverable is produced. ALSO has a **Mode B —
+  standard?", or right after a substantial deliverable is produced. ALSO has a **Mode B —
   behavioral audit**: trigger on "find my blind spots", "what do I/Claude (systematically) miss", "audit
-  my workflow / my habits" ("détecte mes angles morts", "qu'est-ce que je/Claude rate", "audite mon
-  workflow / mes habitudes"). DISAMBIGUATE "audit": audit the QUALITY of a DELIVERABLE → Mode A; audit my
+  my workflow / my habits". DISAMBIGUATE "audit": audit the QUALITY of a DELIVERABLE → Mode A; audit my
   WORKFLOW / behavior / habits → Mode B (target is a parameter: Claude's behavior, OR a codebase, OR a
   skill set — do NOT assume "the repo", derive/ask the target). Do NOT use to: frame a need (→ `frame`),
   prepare the autonomous loop / observability (→ `terrain`), run a single-pass code PR (→ code-review),
@@ -25,21 +23,11 @@ description: >-
 
 # judge — ORCHESTRATOR, external adversarial review, looped to threshold (step 4)
 
-> **Engine**: every scoring mechanic — proof classes (REPLAYABLE vs ATTESTABLE), `[F]`/`[S]` scoring with
-> decorrelated draws, MIN aggregation, fail-closed `[1b]`, the `je-1` verdict OBJECT, the loop stops
-> (ROI-stop / cap / stagnation / regression / conflict), degraded mode, the canary, fallback without
-> subagents — is CANONICAL in `~/.claude/skills/_engine/ENGINE.md` (ch.2 JUDGE, ch.3 RUN). Read it at the
-> Prelude. On divergence the engine wins. **Exception: the full judge prompt template lives HERE as the
-> operating copy — it is the injected instruction; the engine carries only the `je-1` schema.**
+You are the **ORCHESTRATOR** (main session). Bring the deliverable to its regime threshold under adversarial angles, then **send defects back to the producer — never fix them yourself**. Sole excellence gate of the pipeline. Changing hats is allowed same-session: fix as producer (ENGINE Ch.4 — BUILD) between audits, then relaunch external judges — but a judge NEVER audits work it just produced. Mode A (quality audit) is the default; Mode B (behavioral audit) is under `## Modes`.
 
-## Mission
+## Procedure
 
-You are the **ORCHESTRATOR** (main session). Bring the deliverable to its regime threshold under adversarial
-angles, then **send defects back to the producer — never fix them yourself**. Sole excellence gate of the
-pipeline. Changing hats is allowed same-session: fix as producer (ENGINE Ch.4 — BUILD) between audits, then
-relaunch external judges — but a judge NEVER audits work it just produced.
-
-## Prelude (once per run)
+### Prelude (once per run)
 
 **1. Deliverable.** Obtain its path/content. Missing → ask once.
 
@@ -52,12 +40,76 @@ relaunch external judges — but a judge NEVER audits work it just produced.
   - No RUN.md → ask once (Faithful cannot judge without the need).
   - **Evaluate the stop criteria BEFORE launching judges** — any already met → degraded mode now (engine).
 
-**3. Bar = regime** (header `regime:`). disposable → 1 pass, zero-major (or skip at your discretion).
-  standard → zero-major, residual minors listed non-blocking, ROI-stop once zero-major. critical → full panel + doubled [S] draws + ≥1 out-of-model
-  source + canary; closure via engine stops (stagnation / cap / regression), not a self-awarded
-  numeric ceiling.
+**3. Bar = regime** (header `regime:`). disposable → 1 pass, zero-major (or skip at your discretion). standard → zero-major, residual minors listed non-blocking, ROI-stop once zero-major. critical → full panel + doubled [S] draws + ≥1 out-of-model source + canary; closure via engine stops (stagnation / cap / regression), not a self-awarded numeric ceiling.
 
-## Panel (selection by nature, size ∝ regime — engine)
+> Then run the LOOP below. The LOOP draws its panel, proof rules, canary, and injected prompt template from **Mode A** under `## Modes` (the quality-audit sub-procedure). For a behavioral target, jump to **Mode B** instead.
+
+### The LOOP
+
+**[1] AUDIT** — launch judges in parallel with `## Défauts` ledger + decisions injected (stable summary +
+last-cycle delta only, never the verbatim history — bounds per-cycle cost). (Panel selection, decorrelation, and the injected prompt template = Mode A.)
+
+**[1b] COUNT & VALIDATE** — N dispatched ⇒ N schema-valid `je-1` replies before aggregating; missing/invalid
+→ 1 retry → else that dimension is **INVALID** (caps the global, blocks the verdict — never silent 100).
+
+**[2] AGGREGATE** — each [S] = median-then-MIN of its 2 decorrelated draws (gap >20 → 3rd draw MIN; spread of the 3 still >15 → INDETERMINATE + stop-ask);
+each [F] = its single judge; global = **MIN of all dimensions** (engine) — EXCEPT a dimension whose blocking
+defect is `nature:intrinsic`, which is EXCLUDED from the MIN and carried as a visible RISK NOTE (never
+disguised green). Compile defects to `## Défauts`.
+**Early-out**: one consolidated, unambiguous MAJOR → send it back at once, don't wait for full aggregation.
+
+**[2b] BLIND-SPOT SWEEP** (Fusion-inspired — *what no reviewer covered*) — the disjoint exclusion zones
+guarantee each lane is examined, but also risk an in-scope aspect that NO lane owns slipping through
+**unjudged**. **Runs before any verdict ships green (or ROI-stop / degraded-closes) — NOT on an early-out
+send-back** (there a major already returns to the producer; the sweep guards the final clean cycle).
+Cross-check the UNION of the dispatched dimensions against `## Besoin` scope + success-criteria: any in-scope
+facet or need-criterion that NO judge examined = a **blind spot** (a coverage GAP, not a scored defect). This
+is **orthogonal to the canary** (which measures panel *sensitivity*, not *coverage* — a sensitive panel can
+still leave an aspect nobody was assigned). Record them in `## Défauts` under `### Angles morts`; a blind spot
+over a high-risk area → **add the owning dimension (panel table) and re-run from [1]** rather than ship over
+an unexamined gap. Empty after a real look → state "no blind spots detected" (silence ≠ full coverage).
+
+**[3] VERDICT** by threshold. Met → in *critical* only, run global cross-dimension verification first. Not
+met → **send back** prioritized defects to the producer — the `fixer` skill (or you switching hats; never fix as judge): same session = switch hats, fix,
+update ledger, re-run from [1] · other session/user = emit the prioritized final report (ledger included)
+and END, a new invocation re-audits.
+
+**[4] RE-AUDIT** — evaluate stops FIRST, then degraded mode if any fires (engine, 1 line each): ROI-stop
+(zero-major reached → STOP, no cosmetic re-panels) · **intrinsic-early** (≥1 `nature:intrinsic` major at
+cycle 1 → degraded mode NOW, don't wait for the cap — sending an unfixable major back = whack-a-mole) ·
+**cost-cap** (cumulative audits ≥ ~15 AND global-min delta <5 over 2 transitions → forced ROI-stop even
+without zero-major) · cap (≈3 standard / 5 critical — a major alive at cap = under-classification,
+re-raise) · stagnation (global-min flat over 2 transitions) · rotating regression · design conflict.
+Degraded mode = **human hard-stop**: deliverable fate + 2-4 COSTED options + ship NOTHING without OK. Re-audit is **bounded to the diff**: re-judge a 100 dimension only if the diff touches its scope.
+(No subagents → judge sequentially yourself, one lens per pass, keep ledger+decisions; single-pass [S] =
+"degraded vote"; never producer self-assessment.) The orchestrator is the **single writer** of `## Défauts`.
+
+## Output
+
+Final message to the user (the Report) — **in PLAIN words, NO internal jargon**. Never show raw labels (`[S]/[F]`,
+`artifact_based`, `je-1`, "out-of-model", "MIN", "ROI-stop", "canary/CANARY-BLIND", "verdict OBJECT") — translate them:
+- **Global result** + one line per dimension: score + the defect (with proof) + **what to fix to pass**
+  (not "to_reach_100"). Never a bare number.
+- **Blind spots (what no reviewer examined)**, in plain words: the in-scope facets no lane covered (the
+  `### Angles morts` sweep), or "no blind spots detected". Never silently drop an uncovered gap.
+- **Confidence caveats, said plainly** when they apply:
+  - same-AI only (no planted-defect check) → "all reviewers run on the same AI — correlated blind spots possible, not independently confirmed" (MANDATORY on a standard run with no canary pass — silence ≠ safety).
+  - one reviewer instead of two (judgment dimension) → "single pass — lower confidence".
+  - no execution proof → "code read only, behavior not observed" (was `artifact_based:false`).
+  - trigger test not run → "could not confirm the skill actually fires".
+  - planted-defect check missed → "reviewer sensitivity test failed — these scores are not conclusive".
+- **Verdict + next step, plainly**: shipped / sent back to the producer with prioritized fixes / blocked
+  — awaiting your decision before delivering. + cycles consumed.
+
+## Modes
+
+Target is a deliverable's quality? → **Mode A** (default — the LOOP's quality-audit sub-procedure). Target is a behavior/habit/skill-set? → **Mode B**.
+
+### Mode A — Quality audit (default)
+
+The LOOP under `## Procedure` runs this machinery: select the panel, confront the real, plant the canary, then launch judges with the injected prompt template.
+
+**Panel (selection by nature, size ∝ regime — engine)**
 
 | Judge | Dimension | Type |
 |---|---|---|
@@ -81,7 +133,7 @@ pivot flags concern, or the diff touches that dim's scope); double only the SING
 [S] pivot, not every [S]** · critical = full panel upfront + systematic [S] doubling + ≥1 out-of-model
 source (no escalation — pay for full coverage where it's irreversible).
 
-## Confront the real
+**Confront the real**
 
 **100 on TEXT alone is FORBIDDEN for any executable.** Two proof classes (engine ch.2): **REPLAYABLE** (a
 CLI run/build/query with no side effects) → the proof is REPLAYED not believed — the closure gate replays
@@ -99,7 +151,7 @@ post-action screenshot READ · **doc/process** → walk it on 1 concrete case. T
 dead code/leftover debug, no secrets/credentials, no parasitic reformatting. Autonomous producers drift
 into opportunistic refactors — gate them here.
 
-## 🐤 Canary (critical: systematic · standard: SAMPLED — engine ch.2)
+**🐤 Canary (critical: systematic · standard: SAMPLED — engine ch.2)**
 
 Before trusting a critical-panel green: inject ONE planted defect into a **copy** and run the panel on that
 copy first. The defect must be REALISTIC, not trivially-syntactic — a broken brace any Corrector catches
@@ -107,7 +159,7 @@ measures nothing. **Plant-recipes by nature (inline)**: code → invert a condit
 flags it → the ensemble is **blind today** → every green of that panel is downgraded to non-conclusive
 (INVALID) → **FORCED re-escalation**: bump one regime (standard→critical) and re-run, or human hard-stop if already critical — never just log and proceed. Log `CANARY-BLIND`. This measures judge correlation instead of assuming it away. (disposable → NO canary = an **assumed blind spot**, stated as such.) **Thresholds and the exact standard-sampling sub-conditions are CANONICAL in ENGINE Ch.2** — single source; don't re-spell the values here (judge keeps the plant-recipes inline above + the operating gist).
 
-## Launching judges
+**Launching judges**
 
 Launch the selected judges **IN PARALLEL** (one message, multiple subagent calls — never serial). **Model & temperature
 DIVERSITY (decorrelation, not just economy)**: [F] grunt dims (Corrector, Guardian, Optimizer, Conformer,
@@ -164,47 +216,7 @@ prefix (need + criteria + decisions) then the volatile last-cycle delta only.
 > the global MIN, carried as a risk note) · `wont_fix` (deliberate). `to_reach_100` may be `""` for a minor
 > in a ≤standard regime — do NOT manufacture a cosmetic path to 100.)*
 
-## Loop
-
-**[1] AUDIT** — launch judges in parallel with `## Défauts` ledger + decisions injected (stable summary +
-last-cycle delta only, never the verbatim history — bounds per-cycle cost).
-
-**[1b] COUNT & VALIDATE** — N dispatched ⇒ N schema-valid `je-1` replies before aggregating; missing/invalid
-→ 1 retry → else that dimension is **INVALID** (caps the global, blocks the verdict — never silent 100).
-
-**[2] AGGREGATE** — each [S] = median-then-MIN of its 2 decorrelated draws (gap >20 → 3rd draw MIN; spread of the 3 still >15 → INDETERMINATE + stop-ask);
-each [F] = its single judge; global = **MIN of all dimensions** (engine) — EXCEPT a dimension whose blocking
-defect is `nature:intrinsic`, which is EXCLUDED from the MIN and carried as a visible RISK NOTE (never
-disguised green). Compile defects to `## Défauts`.
-**Early-out**: one consolidated, unambiguous MAJOR → send it back at once, don't wait for full aggregation.
-
-**[2b] BLIND-SPOT SWEEP** (Fusion-inspired — *what no reviewer covered*) — the disjoint exclusion zones
-guarantee each lane is examined, but also risk an in-scope aspect that NO lane owns slipping through
-**unjudged**. **Runs before any verdict ships green (or ROI-stop / degraded-closes) — NOT on an early-out
-send-back** (there a major already returns to the producer; the sweep guards the final clean cycle).
-Cross-check the UNION of the dispatched dimensions against `## Besoin` scope + success-criteria: any in-scope
-facet or need-criterion that NO judge examined = a **blind spot** (a coverage GAP, not a scored defect). This
-is **orthogonal to the canary** (which measures panel *sensitivity*, not *coverage* — a sensitive panel can
-still leave an aspect nobody was assigned). Record them in `## Défauts` under `### Angles morts`; a blind spot
-over a high-risk area → **add the owning dimension (panel table) and re-run from [1]** rather than ship over
-an unexamined gap. Empty after a real look → state "aucun angle mort détecté" (silence ≠ full coverage).
-
-**[3] VERDICT** by threshold. Met → in *critical* only, run global cross-dimension verification first. Not
-met → **send back** prioritized defects to the producer — the `fixer` skill (or you switching hats; never fix as judge): same session = switch hats, fix,
-update ledger, re-run from [1] · other session/user = emit the prioritized final report (ledger included)
-and END, a new invocation re-audits.
-
-**[4] RE-AUDIT** — evaluate stops FIRST, then degraded mode if any fires (engine, 1 line each): ROI-stop
-(zero-major reached → STOP, no cosmetic re-panels) · **intrinsic-early** (≥1 `nature:intrinsic` major at
-cycle 1 → degraded mode NOW, don't wait for the cap — sending an unfixable major back = whack-a-mole) ·
-**cost-cap** (cumulative audits ≥ ~15 AND global-min delta <5 over 2 transitions → forced ROI-stop even
-without zero-major) · cap (≈3 standard / 5 critical — a major alive at cap = under-classification,
-re-raise) · stagnation (global-min flat over 2 transitions) · rotating regression · design conflict.
-Degraded mode = **human hard-stop**: deliverable fate + 2-4 COSTED options + ship NOTHING without OK. Re-audit is **bounded to the diff**: re-judge a 100 dimension only if the diff touches its scope.
-(No subagents → judge sequentially yourself, one lens per pass, keep ledger+decisions; single-pass [S] =
-"degraded vote"; never producer self-assessment.) The orchestrator is the **single writer** of `## Défauts`.
-
-## Mode B — Behavioral audit
+### Mode B — Behavioral audit
 
 Target is a deliverable's quality? → Mode A above. Target is a behavior/habit/skill-set? → here.
 
@@ -227,28 +239,22 @@ armchair reasoning), plus a severity.
 spots), PLANT one realistic blind-spot into one lens's input (a fabricated anchor, or a deliberately-missed
 habit) and confirm ≥1 lens flags it. None do → the panel is **blind today**: log `CANARY-BLIND`, mark the
 findings **non-conclusive** ("correlated same-model angle — blind spot not excluded"), and surface that caveat.
-Skipped → state "sensibilité du panel non testée" (never silent). (This closes the producer=judge hole on the
+Skipped → state "panel sensitivity untested" (never silent). (This closes the producer=judge hole on the
 kit's most self-referential audit.)
 **Output = PROPOSE, never impose**: table `blind spot | proposed rule | anchor | impact` + a proposed
 integration point (hard rule / skill guardrail / memory / just known / nowhere). NEVER write to CLAUDE.md,
 a skill, or memory without user OK.
 
-## Report
+## Don't
 
-Final message to the user — **in PLAIN words, NO internal jargon**. Never show raw labels (`[S]/[F]`,
-`artifact_based`, `je-1`, "out-of-model", "MIN", "ROI-stop", "canary/CANARY-BLIND", "verdict OBJECT") — translate them:
-- **Global result** + one line per dimension: score + the defect (with proof) + **what to fix to pass**
-  (not "to_reach_100"). Never a bare number.
-- **Blind spots (what no reviewer examined)**, in plain words: the in-scope facets no lane covered (the
-  `### Angles morts` sweep), or "aucun angle mort détecté". Never silently drop an uncovered gap.
-- **Confidence caveats, said plainly** when they apply:
-  - same-AI only (no planted-defect check) → "tous les relecteurs tournent sur la même IA — angles morts
-    corrélés possibles, pas confirmé indépendamment" (MANDATORY on a standard run with no canary pass — silence ≠ safety).
-  - one reviewer instead of two (judgment dimension) → "une seule passe — moins de confiance".
-  - no execution proof → "relu le code seulement, comportement pas observé" (was `artifact_based:false`).
-  - trigger test not run → "pas pu confirmer que le skill se déclenche bien".
-  - planted-defect check missed → "test de sensibilité des relecteurs raté — ces notes ne sont pas concluantes".
-- **Verdict + next step, plainly**: shipped / renvoyé au producteur avec les corrections priorisées / bloqué
-  — demande ta décision avant de livrer. + cycles consumed.
+- **FIX what you audit** — judge JUDGES, it never repairs: defects always go back to the producer = the `fixer` skill (or you switching hats same-session; a judge NEVER audits work it just produced).
+- **Ship 100 on TEXT alone for an executable** — absent observation artifact → send back, not a sterile low note.
+- **Show raw internal jargon** in the report (`[S]/[F]`, `artifact_based`, `je-1`, "MIN", "ROI-stop", "canary/CANARY-BLIND") — translate to plain words.
+- **Disguise a degraded/INVALID/CANARY-BLIND state as green** — surface every false-green caveat; same-model panel is not independent confirmation.
+- **Auto-write** in Mode B — PROPOSE only; never edit CLAUDE.md / a skill / memory without user OK.
+- Frame a need (→ `frame`) · prepare the autonomous loop / observability (→ `terrain`) · run a single-pass code PR (→ code-review).
 
-**Start with the Prelude.**
+## Engine & reflexes
+
+- Every scoring mechanic — proof classes (REPLAYABLE vs ATTESTABLE), `[F]`/`[S]` scoring with decorrelated draws, MIN aggregation, fail-closed `[1b]`, the `je-1` verdict OBJECT, the loop stops (ROI-stop / cap / stagnation / regression / conflict), degraded mode, the canary, fallback without subagents — is **CANONICAL in `~/.claude/skills/_engine/ENGINE.md` (Ch.2 JUDGE, Ch.3 RUN)**. Read it at the Prelude. On divergence the engine wins. (Judge's delta = the panel table + exclusion zones + canary plant-recipes + the injected prompt template + the [2b] blind-spot sweep + Mode B.)
+- **Exception — kept INLINE here as operating copy** (NOT in the engine): the full injected judge prompt template (it IS the instruction sent to sub-judges), the panel selection table, the exclusion zones, the canary plant-recipes/protocol, the [S]/[F] doubling rules, the Mode B behavioral-lens list + its mandatory canary, and the plain-words Report translation rules. The engine carries only the `je-1` schema.

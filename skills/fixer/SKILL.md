@@ -9,9 +9,7 @@ description: >-
   VERIFIES red→green with an OUT-OF-MODEL artifact (test/exit code/screenshot READ/query — never self-judged
   text), GUARDS against regression, then LOOPS BACK to `judge`. Execution mechanics are CANONICAL in
   `_engine/ENGINE.md` Ch.4 — BUILD; the fixer wires them and carries only the delta: defect intake, triage,
-  the anti-blind reflexes, and the loop-back. Trigger on « répare ce bug / corrige / le test échoue répare-le /
-  rends-le vert / applique le retour du judge / résous les défauts / c'est toujours cassé » / "fix the bug /
-  make it green / the test fails repair it / apply the judge's findings / resolve the defects / it's still
+  the anti-blind reflexes, and the loop-back. Trigger on "fix the bug / make it green / the test fails repair it / apply the judge's findings / resolve the defects / it's still
   broken", or right after `judge` returns defects to the producer. Do NOT use to: AUDIT quality or decide if a
   deliverable is done → `judge` (the fixer fixes, it NEVER judges its own fix); frame a need or decide WHAT to
   build → `frame`; prepare the observability harness / autonomous loop → `terrain`.
@@ -19,61 +17,36 @@ description: >-
 
 # fixer — resolve a defect into a VERIFIED green (the producer's loop)
 
-> **Engine**: the BUILD mechanics — decompose into signal-bearing increments, red-first then green, systematic
-> debugging, checkpoint/rollback, anti-regression cadence — are CANONICAL in
-> `~/.claude/skills/_engine/ENGINE.md` Ch.4 (BUILD). This skill WIRES them and adds only the fixer-specific
-> delta. On divergence, the engine wins.
+## Procedure  (per defect — one at a time)
 
-## Mission
-Take ONE defect (from `judge`, from a hook/gate, or raw from the user) and bring it to a green VERIFIED by an
-out-of-model artifact — then loop back to `judge`. You are the PRODUCER; you never sign your own quality
-verdict (that is `judge`'s job).
+**0. Intake & triage.** One work item = one `RUN.md`; each defect = one entry in its `## Défauts` ledger (cite the proof the judge/hook gave). Several defects → order by severity / blast-radius and fix ONE at a time (a batch fix hides which change did what). Set the RUN header `regime:`. Place the RUN.md at `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` and set the `session:` header (session-scoping mechanics + legacy fallback: **ENGINE ch.3 / socle §1**). **A mono-defect fix has NO approach fork** → DELETE the template's `## Options`/`Décision:` scaffold (a repair scores no options; a leftover `Décision:` placeholder used to arm the closure anti-fixation gate — now also ignored gate-side).
 
-## The loop (per defect)
+**1. REPRODUCE — red FIRST.** Before touching anything, make the bug FAIL observably: a failing test, a non-zero exit, a screenshot READ, a query. A fix applied to an UNreproduced bug repairs a maybe-non-bug. No red → no fix; if you can't reproduce, investigate the repro, do not guess-patch.
 
-**0. Intake & triage.** One work item = one `RUN.md`; each defect = one entry in its `## Défauts` ledger
-(cite the proof the judge/hook gave). Several defects → order by severity / blast-radius and fix ONE at a
-time (a batch fix hides which change did what). Set the RUN header `regime:`. Place the RUN.md at
-`Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` and set the `session:` header
-(session-scoping mechanics + legacy fallback: **ENGINE ch.3 / socle §1**). **A mono-defect fix has NO approach
-fork** → DELETE the template's `## Options`/`Décision:` scaffold (a repair scores no options; a leftover
-`Décision:` placeholder used to arm the closure anti-fixation gate — now also ignored gate-side).
+**2. LOCALIZE the REAL cause.** Confirm which view / module / branch / config / **build** ACTUALLY runs BEFORE any static diagnosis — never assume the code you're reading is the code that executes (stale binary, wrong path, wrong project, another session's copy). Trace the live execution to the NAMED cause.
 
-**1. REPRODUCE — red FIRST.** Before touching anything, make the bug FAIL observably: a failing test, a
-non-zero exit, a screenshot READ, a query. A fix applied to an UNreproduced bug repairs a maybe-non-bug. No
-red → no fix; if you can't reproduce, investigate the repro, do not guess-patch.
+**3. FIX the named cause, MINIMALLY.** Touch ONLY what the defect names (reflex 11 — the unnamed stays intact). No opportunistic refactor, no "while I'm at it". Smallest change that flips red→green.
 
-**2. LOCALIZE the REAL cause.** Confirm which view / module / branch / config / **build** ACTUALLY runs
-BEFORE any static diagnosis — never assume the code you're reading is the code that executes (stale binary,
-wrong path, wrong project, another session's copy). Trace the live execution to the NAMED cause.
+**4. VERIFY red→green OUT-OF-MODEL.** Re-run the SAME artifact from step 1 → it must now pass. The proof is the artifact (test/exit/screenshot/query), never self-judged text (reflexes 2 & 3). Without a real artifact: say "self-declared, unverified" — do not claim green. Close the RUN `green` only here (the Stop-gate replays the signal). **Adversarial coverage on YOUR own test (kaizen 2026-06-18)**: a test YOU wrote passing proves the happy path, not the absence of the bug class — for a boundary/discriminant fix, NAME an input that SHOULD make the test fail and confirm it does (mutation); if you can't construct one, status = "self-declared, coverage-unverified", not green. A self-Verify gate may PASS work downstream but is never the final authority that KILLS a finding about your own recent edit → re-challenge it (decorrelated pass / human), don't drop it.
 
-**3. FIX the named cause, MINIMALLY.** Touch ONLY what the defect names (reflex 11 — the unnamed stays
-intact). No opportunistic refactor, no "while I'm at it". Smallest change that flips red→green.
+**5. GUARD against regression.** Run the surrounding tests / a quick smoke to confirm a neighbour didn't break. A recurring class of bug worth catching → promote it into a `check:` line (the gate replays it).
 
-**4. VERIFY red→green OUT-OF-MODEL.** Re-run the SAME artifact from step 1 → it must now pass. The proof is
-the artifact (test/exit/screenshot/query), never self-judged text (reflexes 2 & 3). Without a real artifact:
-say "self-declared, unverified" — do not claim green. Close the RUN `green` only here (the Stop-gate replays
-the signal). **Adversarial coverage on YOUR own test (kaizen 2026-06-18)**: a test YOU wrote passing proves
-the happy path, not the absence of the bug class — for a boundary/discriminant fix, NAME an input that SHOULD
-make the test fail and confirm it does (mutation); if you can't construct one, status = "self-declared,
-coverage-unverified", not green. A self-Verify gate may PASS work downstream but is never the final authority
-that KILLS a finding about your own recent edit → re-challenge it (decorrelated pass / human), don't drop it.
+**6. LOOP BACK to `judge`.** The fixer never decides "done". Hand the verified fix back to `judge`; if the judge sent a batch, fix the next defect and re-submit the set. `judge` re-audits — an incomplete fix or a regression comes back here.
 
-**5. GUARD against regression.** Run the surrounding tests / a quick smoke to confirm a neighbour didn't
-break. A recurring class of bug worth catching → promote it into a `check:` line (the gate replays it).
+## Output
 
-**6. LOOP BACK to `judge`.** The fixer never decides "done". Hand the verified fix back to `judge`; if the
-judge sent a batch, fix the next defect and re-submit the set. `judge` re-audits — an incomplete fix or a
-regression comes back here.
+A defect is `green` in its `## Défauts` ledger entry ONLY after step 4's artifact passed, recording: named cause + minimal fix + proof artifact. Then `judge` owns the closure verdict — never the fixer. The RUN.md `status: green` is the machine-readable signal the Stop-gate replays.
 
-## Anti-blind reflexes (the fixer-specific delta)
-- **Relayed report ≠ truth** — verify the REAL artifact (diff / file / output), never the report on its word.
-- **The code you read ≠ the code that runs** — confirm the live path / build / branch first (the #1 trap).
-- **One cause, one fix** — no bundling; a green that bundles N changes can't attribute the fix or a regression.
-- **Blocked** (2-3 distinct approaches exhausted) → parallel resolver sub-agents BEFORE interrupting the human
-  (reflex 9). Interrupt only for: destructive, out-of-scope, external dependency.
-- **STOP-and-ask**: outside the harness · 3+ fixes failed in a row · genuine ambiguity · destructive/prod auth.
+## Don't
 
-## Done
-A defect is `green` in its RUN.md ONLY after step 4's artifact passed, with the ledger recording cause + fix +
-proof. Then `judge` owns the closure verdict — never the fixer.
+- **No red → no fix** — never guess-patch an unreproduced bug.
+- **The code you read ≠ the code that runs** — confirm the live path / build / branch FIRST (the #1 trap); never diagnose statically before verifying the live execution.
+- **No bundled changes** — one cause, one fix; a green that bundles N changes can't attribute the fix or catch a regression.
+- **No self-verdict** — the fixer NEVER judges its own fix; that is `judge`'s job. Relayed report ≠ truth: verify the REAL artifact (diff / file / output), never the report on its word.
+- **STOP-and-ask**: outside the harness · 3+ fixes failed in a row · genuine ambiguity · destructive/prod auth. Blocked (2-3 distinct approaches exhausted) → parallel resolver sub-agents BEFORE interrupting the human (reflex 9). Interrupt only for: destructive, out-of-scope, external dependency.
+
+## Engine & reflexes
+
+BUILD mechanics — decompose into signal-bearing increments, red-first then green, systematic debugging, checkpoint/rollback, anti-regression cadence — are CANONICAL in `~/.claude/skills/_engine/ENGINE.md` **Ch.4 (BUILD)**. This skill wires them and adds only the fixer-specific delta. On divergence, the engine wins.
+
+Reflex anchor: **`CausalHypothesis:` before any edit** — a fix without a verified cause is a guess; the fix-gate blocks blind-fix loops.
