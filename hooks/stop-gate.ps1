@@ -70,7 +70,10 @@ function Invoke-GateCmd([string]$c) {
 $script:proofRunners = @('dotnet test', 'dotnet build', 'dotnet run', 'pytest', 'npm test', 'npm run', 'jest', 'go test', 'cargo test', 'msbuild', 'make ')
 function Test-MeaningfulProof([string]$c) {
     if (-not $c) { return $false }
-    $e = ($c -replace '^(?i)\s*cmd\s+/c\s+', '').Trim().Trim('"').Trim()
+    # fix (Gemini 2026-06-18) : tolere 'cmd.exe' + espace optionnel autour de /c ; normalise les espaces
+    # internes (un double-espace 'dotnet  test' ne casse plus le match du runner).
+    $e = ($c -replace '(?i)^\s*cmd(\.exe)?\s*/c\s*', '').Trim().Trim('"').Trim()
+    $e = ($e -replace '\s+', ' ')
     if ($e -match '(?i)(^|\s)-File\s+\S+\.(ps1|cmd|bat)(\b|$)') { return $true }
     if ($e -match '(?i)\.(ps1|cmd|bat|py|js)(\s|$)') { return $true }
     foreach ($r in $script:proofRunners) { if ($e -match ('(?i)^' + [regex]::Escape($r))) { return $true } }
@@ -150,7 +153,8 @@ foreach ($d in $wsDirs) {
                 $failures += ('signal-cmd ne PROUVE rien (ni runner test/build ni script .ps1/.bat/.cmd/.py/.js) : ' + $cmd)
             }
             $white = $false
-            foreach ($p in $replayWhitelist) { if ($cmd -match ('(?i)^' + [regex]::Escape($p) + '(\s|$)')) { $white = $true; break } }   # fix (failles scout) : word-boundary -> 'dotnet testxyz' ne matche plus
+            $cmdN = ($cmd -replace '\s+', ' ')   # fix (Gemini) : double-espace ('dotnet  test') ne rate plus la whitelist
+            foreach ($p in $replayWhitelist) { if ($cmdN -match ('(?i)^' + [regex]::Escape($p) + '(\s|$)')) { $white = $true; break } }   # word-boundary -> 'dotnet testxyz' ne matche plus
             if ($white -and $mayReplay) {
                 $rc = Invoke-GateCmd $cmd
                 if ($rc -ne 0) {
@@ -212,7 +216,11 @@ foreach ($d in $wsDirs) {
         $bad += ($d.Name + ' (green NON VERIFIE -> ' + ($failures -join ' ; ') + ')')
     } else {
         $stamp = '[' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + '] GATE-VERIFIED'
-        Add-Content -Path $run -Value $stamp -Encoding utf8
+        # fix (Gemini 2026-06-18) : si RUN.md ne finit pas par un newline, Add-Content COLLE le tag a la
+        # derniere ligne -> le marqueur (ancre ^...$) n'est plus reconnu au tour suivant. Prefixe un saut si besoin.
+        $rawRun = ''; try { $rawRun = [IO.File]::ReadAllText($run) } catch { }
+        $lead = if ($rawRun.Length -gt 0 -and $rawRun[-1] -ne "`n") { "`r`n" } else { '' }
+        Add-Content -Path $run -Value ($lead + $stamp) -Encoding utf8
     }
 }
 

@@ -48,6 +48,8 @@ Check 'anti-flaky FIRE  (sleep brut PS)' ((Run 'anti-flaky.ps1' (J @{ tool_input
 Check '#11 anti-flaky FIRE (python time.sleep)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('time.' + 'sleep(5)') } })) -match 'deny')  # sleep-ok: fixture python construite
 Check 'REG anti-flaky FIRE (Start-Sleep float 1.5)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' 1.5') } })) -match 'deny')  # sleep-ok: fixture float construite
 Check 'REG anti-flaky FIRE (Start-Sleep paren cast)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + '([int]5)') } })) -match 'deny')  # sleep-ok: fixture paren construite
+Check 'REG(Gemini) anti-flaky FIRE (sleep(2) paren nu)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + '(2)') } })) -match 'deny')  # sleep-ok: fixture construite
+Check 'REG(Gemini) anti-flaky FIRE (sleep (2) espace+paren)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + ' (2)') } })) -match 'deny')  # sleep-ok: fixture construite
 Check 'anti-flaky SILENT(poll 200ms)' (-not ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Milliseconds 200') } })) -match 'deny'))  # sleep-ok: fixture poll
 Check 'anti-flaky PARSE (malforme)' (-not ((Run 'anti-flaky.ps1' '{{bad') -match 'deny'))
 
@@ -108,6 +110,14 @@ Check 'stop-gate PASSE (critical + signal-attestable)' (-not ((Run 'stop-gate.ps
 # re-open : un event unit= APRES GATE-VERIFIED force la re-verif (ici signal vacant -> re-bloque)
 MkRun "status: green`nsession: $sid`nregime: standard`nsignal-cmd: cmd /c exit 0`n[2026-01-01 00:00] GATE-VERIFIED`n[2026-01-01 00:01] unit=rework"
 Check 'stop-gate re-verifie (unit= apres GATE-VERIFIED -> re-block)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+# REG(Gemini) : cmd.exe /c + runner = preuve valide (cmd.exe non-whiteliste -> pas de rejeu)
+MkRun "status: green`nsession: $sid`nregime: standard`nsignal-cmd: cmd.exe /c dotnet test"
+Check 'REG(Gemini) stop-gate PASSE (cmd.exe /c dotnet test = preuve)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# REG(Gemini) : GATE-VERIFIED sur sa PROPRE ligne meme si RUN.md sans newline final (disposable -> passe -> stamp)
+New-Item -ItemType Directory -Force -Path $d | Out-Null
+[IO.File]::WriteAllText((Join-Path $d 'RUN.md'), "status: green`nsession: $sid`nregime: disposable`nderniere ligne SANS NL")
+Run 'stop-gate.ps1' $sg | Out-Null
+Check 'REG(Gemini) GATE-VERIFIED sur sa propre ligne (RUN.md sans NL final)' ((Get-Content (Join-Path $d 'RUN.md'))[-1] -match '^\s*\[[^\]]*\]\s*GATE-VERIFIED\s*$')
 
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
