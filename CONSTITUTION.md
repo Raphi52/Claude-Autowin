@@ -42,6 +42,9 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
 1. **THE MOMENT you are about to ask the user a question** → board-gate first: can we answer it ourselves
    with a CITED fact? If yes → stated assumption ("I'm assuming X — correct me"). Surface to the human ONLY
    the strictly-private, the high-impact, the genuine outcome-doubt. The human is the scarcest resource.
+   **QCM ≠ acknowledgment (kaizen 2026-06-19)**: a multiple-choice whose recommended option you'd pick anyway
+   is a disguised ack, not a real fork → proceed on a stated assumption ("taking X — stop me"); surface only
+   if the lead option carries a non-trivial downside.
 2. **THE MOMENT you are about to say "done / finished / green"** → require a verified OUT-OF-MODEL artifact
    (test red→green, exit code, screenshot READ, query). Without one, say so: "self-declared, unverified". An
    open run closes `green` (verified) or `degraded-closed` (user OK) — the Stop hook blocks everything else.
@@ -54,7 +57,9 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
    hook, auth/autonomy logic, a public-repo commit) → run `judge` BEFORE commit/push, not after (a QUALITY step,
    NOT a re-authorization — reflex 12 does not disarm it); if it hasn't run, surface "judge not yet run — push
    anyway?". And a "green/verified" label must NAME its out-of-model authority (a hook exit-code, or a human OK),
-   else "self-declared, same-model only".
+   else "self-declared, same-model only". A test-HARNESS you authored/extended the SAME turn (e.g. `test-hooks`
+   exit 0) is self-consistent, not adversarial — for a hook/security change it's the happy-path floor, NOT
+   closure; the adversarial authority is an external `judge` pass.
 3. **THE MOMENT you receive a report** (from a sub-agent or yourself) → verify the REAL artifact (diff, file,
    output), never the report on its word.
 4. **THE MOMENT you launch N independent tasks** → fan out IN PARALLEL (one message, several agents);
@@ -63,6 +68,9 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
    this session), surface "~N agents this session, +M this fan-out (~Xk tok) → go?". Bracket N by regime:
    disposable ≤2 · standard ≤3 · critical ≤5 (≤7 only critical+high-variance); exceeding needs one line of
    justification. Never silently auto-widen a panel. (Distinct from reflex 12: that gates RE-launch; this gates a fresh fan-out's SIZE.)
+   **Per-CYCLE too (kaizen 2026-06-19)**: the bracket gates ONE fan-out's size, not the COMPOUND cost of N full
+   pipeline cycles on the same artifact → at each NEW cycle (scout/frame entry) on an already-cycled target,
+   surface session cycle-count + cumulative agents BEFORE the first agent.
 5. **THE MOMENT you calibrate effort** → regime (disposable / standard / critical); in doubt, lower + flag.
    Never over-treat the disposable nor under-treat the irreversible.
 6. **THE MOMENT a request arrives shaped as a solution** ("create X", "make Z") → trace back to the real

@@ -24,6 +24,18 @@ All notable changes to the kit. Versions follow the `VERSION` file.
   all had hooks, this one didn't). Session class-auth model ("push-as-you-go": grant once, holds for the session).
 - Newly documented (previously inline): `model-tier`, `session-inject`, `thinking-mode`, `precompact-runcheck`.
 
+### Reflexes (kaizen — FOLDED into existing reflexes, no new numbers; the trim-or-replace discipline applied to itself)
+- **Reflex 1** — a QCM whose "(Recommended)" option you'd pick anyway is a disguised acknowledgment, not a real
+  fork → proceed on a stated assumption; surface only if the lead option carries a non-trivial downside.
+- **Reflex 2** — a test-harness authored/extended the SAME turn (e.g. `test-hooks` exit 0) is self-consistent,
+  not adversarial; the adversarial authority for a hook/security change is an external `judge` pass.
+- **Reflex 4** — the agent-bracket gates ONE fan-out's size, not the COMPOUND cost of N pipeline cycles on the
+  same artifact → surface session cycle-count + cumulative agents at each new cycle.
+- **`kaizen` skill (integrate step)** — trim-or-replace: every reflex/fiche added must FOLD into or RETIRE an
+  existing one (finite attention budget) — never proliferate a new number for what an existing reflex frames.
+- **memory** — a "confirmation pass" can't produce a STOP (a same-model re-run of a same-model fix always finds
+  a residual) → pre-commit a stop threshold; label self-generated debt honestly, not "kit value".
+
 ## 3.5.0 — 2026-06-18
 
 ### Security
