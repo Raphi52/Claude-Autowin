@@ -9,10 +9,9 @@ $ErrorActionPreference = 'SilentlyContinue'
 $f = Join-Path $env:USERPROFILE '.claude\gate-counters.jsonl'
 if (-not (Test-Path $f)) { '[]'; exit 0 }
 $cutoff = if ($SinceDays -gt 0) { (Get-Date).AddDays(-$SinceDays) } else { [datetime]::MinValue }
-# Fixture globs CONFIGURABLE via env KAIZEN_FIXTURE_PATHS (';'-separated) instead of hardcoded machine paths.
-# Default = the test-hooks fixtures (under %TEMP% since the portable hardening) + legacy C:\x\ / C:\tmp\.
-# Another machine sets ITS own fixture paths.
-$fixtureGlobs = if ($env:KAIZEN_FIXTURE_PATHS) { $env:KAIZEN_FIXTURE_PATHS -split ';' } else { @('C:\x\*', 'C:\tmp\*', ((Join-Path ([System.IO.Path]::GetTempPath()) 'claude-test*'))) }
+# Fixture globs CONFIGURABLE via env KAIZEN_FIXTURE_PATHS (';'-separated). Default = the test-hooks fixtures
+# only (under %TEMP%, portable) — no hardcoded machine paths. Another machine sets ITS own via the env var.
+$fixtureGlobs = if ($env:KAIZEN_FIXTURE_PATHS) { $env:KAIZEN_FIXTURE_PATHS -split ';' } else { @((Join-Path ([System.IO.Path]::GetTempPath()) 'claude-test*')) }
 
 $rows = @()
 foreach ($line in ([System.IO.File]::ReadLines($f))) {   # streaming: does not load the whole file in memory

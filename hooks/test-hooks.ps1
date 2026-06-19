@@ -20,6 +20,11 @@ function Check($name, $cond) { if ($cond) { "OK   $name" } else { "FAIL $name"; 
 $sid = 'test-hooks-260618'
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "claude-test-$sid"
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+# TELEMETRY ISOLATION (kaizen) : redirige USERPROFILE vers un sandbox pour TOUT le run -> aucun hook n'ecrit
+# dans la VRAIE gate-counters.jsonl (cause racine du 87% de pollution). $H (hooks) reste reel (PSScriptRoot deja capture).
+$origUP = $env:USERPROFILE
+$sandboxHome = Join-Path $tmp 'home'; New-Item -ItemType Directory -Force (Join-Path $sandboxHome '.claude\hooks') | Out-Null
+$env:USERPROFILE = $sandboxHome
 
 # --- fix-gate : FIRE (6e edit non discipline) / SILENT (.md) / PARSE / #7 prose-vs-token ---
 $st = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-fixgate-$sid.json")
@@ -40,17 +45,21 @@ Check '#7 fix-gate SILENT(fichier sur ligne CausalHypothesis)' (-not ((Run 'fix-
 @{ 'c:\tmp\x.ps1' = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
 Set-Content (Join-Path $df 'RUN.md') "status: open`nsession: $sid`nJournal: j ai hesite a mettre fix-gate: off mais finalement non" -Encoding utf8
 Check 'REG fix-gate:off en PROSE -> DENY' ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\x.ps1'; new_string = 'code' } })) -match 'deny')
+# green-reset : un RUN green nommant le fichier (sur fix-file:, SANS check/CausalHypothesis -> pas discipline) reset le compteur 1x/transition -> SILENT
+@{ 'c:\tmp\gr.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content (Join-Path $df 'RUN.md') -Value "status: green`nsession: $sid`nfix-file: gr.ps1`n[2026-01-01 00:00] GATE-VERIFIED" -Encoding utf8
+Check 'green-reset fix-gate SILENT (RUN green nommant le fichier reset le compteur)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\gr.ps1'; new_string = 'code' } })) -match 'deny'))
 Remove-Item -Recurse -Force $df -EA SilentlyContinue
 Remove-Item $st -EA SilentlyContinue
 
 # --- anti-flaky : FIRE (sleep brut PS) / FIRE (python, fix #11) / SILENT (poll court) / PARSE ---
-Check 'anti-flaky FIRE  (sleep brut PS)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Seconds 5') } })) -match 'deny')  # sleep-ok: fixture (chaine construite)
-Check '#11 anti-flaky FIRE (python time.sleep)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('time.' + 'sleep(5)') } })) -match 'deny')  # sleep-ok: fixture python construite
-Check 'REG anti-flaky FIRE (Start-Sleep float 1.5)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' 1.5') } })) -match 'deny')  # sleep-ok: fixture float construite
-Check 'REG anti-flaky FIRE (Start-Sleep paren cast)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + '([int]5)') } })) -match 'deny')  # sleep-ok: fixture paren construite
-Check 'REG(Gemini) anti-flaky FIRE (sleep(2) paren nu)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + '(2)') } })) -match 'deny')  # sleep-ok: fixture construite
-Check 'REG(Gemini) anti-flaky FIRE (sleep (2) espace+paren)' ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + ' (2)') } })) -match 'deny')  # sleep-ok: fixture construite
-Check 'anti-flaky SILENT(poll 200ms)' (-not ((Run 'anti-flaky.ps1' (J @{ tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Milliseconds 200') } })) -match 'deny'))  # sleep-ok: fixture poll
+Check 'anti-flaky FIRE  (sleep brut PS)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Seconds 5') } })) -match 'deny')  # sleep-ok: fixture (chaine construite)
+Check '#11 anti-flaky FIRE (python time.sleep)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('time.' + 'sleep(5)') } })) -match 'deny')  # sleep-ok: fixture python construite
+Check 'REG anti-flaky FIRE (Start-Sleep float 1.5)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' 1.5') } })) -match 'deny')  # sleep-ok: fixture float construite
+Check 'REG anti-flaky FIRE (Start-Sleep paren cast)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + '([int]5)') } })) -match 'deny')  # sleep-ok: fixture paren construite
+Check 'REG(Gemini) anti-flaky FIRE (sleep(2) paren nu)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + '(2)') } })) -match 'deny')  # sleep-ok: fixture construite
+Check 'REG(Gemini) anti-flaky FIRE (sleep (2) espace+paren)' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\z.py'; new_string = ('sleep' + ' (2)') } })) -match 'deny')  # sleep-ok: fixture construite
+Check 'anti-flaky SILENT(poll 200ms)' (-not ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\y.ps1'; new_string = ('Start-Sleep' + ' -Milliseconds 200') } })) -match 'deny'))  # sleep-ok: fixture poll
 Check 'anti-flaky PARSE (malforme)' (-not ((Run 'anti-flaky.ps1' '{{bad') -match 'deny'))
 
 # --- advisory-guard : FIRE / SILENT / PARSE ---
@@ -97,6 +106,9 @@ Check '#3 stop-gate PASSE (whitelist case-insensitive)' (-not ((Run 'stop-gate.p
 # disposable : aucune preuve requise -> PASSE
 MkRun "status: green`nsession: $sid`nregime: disposable"
 Check 'stop-gate PASSE (disposable sans preuve)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# degraded-closed = USER-OK -> PASS (3e statut, distinct de open/red qui BLOQUENT)
+MkRun "status: degraded-closed`nsession: $sid`nregime: standard"
+Check 'stop-gate PASSE (degraded-closed = USER-OK honor-bound)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 # critical sans preuve -> block ; avec check:/attestable -> pass
 MkRun "status: green`nsession: $sid`nregime: critical"
 Check 'stop-gate BLOQUE (critical sans preuve)' ((Run 'stop-gate.ps1' $sg) -match 'block')
@@ -122,9 +134,12 @@ Check 'REG(Gemini) GATE-VERIFIED sur sa propre ligne (RUN.md sans NL final)' ((G
 # --- extracted inline hooks (2026-06-18) : model-tier / judge-nudge / precompact-runcheck / thinking-mode / session-inject ---
 Check 'model-tier FIRE (Explore, no model -> sonnet)' ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'Explore' } })) -match 'sonnet')
 Check 'model-tier SILENT (other agent type)' (-not ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'statusline-setup' } })) -match 'updatedInput'))
+Check 'model-tier SILENT (Explore avec model deja set -> pas d override)' (-not ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'Explore'; model = 'opus' } })) -match 'updatedInput'))
 $jnflag = Join-Path ([System.IO.Path]::GetTempPath()) ('claude-review-nudge-' + $sid + '.flag'); Remove-Item $jnflag -EA SilentlyContinue
 Check 'judge-nudge FIRE (code file, fresh session)' ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x.py' } })) -match 'additionalContext')
 Check 'judge-nudge SILENT (.txt out of scope)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x.txt' } })) -match 'additionalContext'))
+Check 'judge-nudge SILENT (2e appel meme session, flag deja pose = 1x/session)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x2.py' } })) -match 'additionalContext'))
+Remove-Item $jnflag -EA SilentlyContinue
 $pc = Join-Path $tmp "Audit\workspaces\$sid\pc-workspace"; New-Item -ItemType Directory -Force $pc | Out-Null; Set-Content (Join-Path $pc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
 Check 'precompact FIRE (open RUN -> systemMessage)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
 Check 'precompact SILENT (no session dir)' (-not ((Run 'precompact-runcheck.ps1' (J @{ session_id = 'none-xyz'; cwd = $tmp })) -match 'systemMessage'))
@@ -171,8 +186,23 @@ $gc = Join-Path $tmp '.claude\gate-counters.jsonl'
 Check 'kaizen-revert-log FIRE   (A->B->A = revert logge gate-counters)' ((Test-Path $gc) -and ((Get-Content $gc -Raw) -match '"gate":\s*"revert"'))
 $env:USERPROFILE = $prevUP; Remove-Item $revStore -EA SilentlyContinue
 Check 'kaizen-nudge      PARSE  (malforme -> pas de nudge)' (-not ((Run 'kaizen-nudge.ps1' 'bad {{') -match 'additionalContext|systemMessage'))
-Check 'kaizen-nudge      SILENT (compteurs propres -> pas de nudge)' (-not ((Run 'kaizen-nudge.ps1' (J @{ session_id = $sid })) -match 'additionalContext|systemMessage'))
+# SILENT hermetique : USERPROFILE redirige vers un temp SANS gate-counters -> detect rend [] -> pas de nudge (ne depend PAS de la telemetrie machine reelle).
+$knClean = Join-Path $tmp 'kn-clean'; $knCleanH = Join-Path $knClean '.claude\hooks'; New-Item -ItemType Directory -Force $knCleanH | Out-Null
+Copy-Item (Join-Path $H 'kaizen-detect.ps1') (Join-Path $knCleanH 'kaizen-detect.ps1') -Force
+$prevUP4 = $env:USERPROFILE; $env:USERPROFILE = $knClean
+Check 'kaizen-nudge      SILENT (detect ne trouve aucun pattern -> pas de nudge)' (-not ((Run 'kaizen-nudge.ps1' (J @{ session_id = $sid })) -match 'additionalContext|systemMessage'))
+$env:USERPROFILE = $prevUP4
+# FIRE : pattern recurrent REEL (>=5 fix-gate, fichiers distincts, session non-test) -> nudge. USERPROFILE redirige + kaizen-detect copie ; ledger absent ; flag retire.
+$knUP = Join-Path $tmp 'kn-up'; $knH = Join-Path $knUP '.claude\hooks'; New-Item -ItemType Directory -Force $knH | Out-Null
+Copy-Item (Join-Path $H 'kaizen-detect.ps1') (Join-Path $knH 'kaizen-detect.ps1') -Force
+$knGc = Join-Path $knUP '.claude\gate-counters.jsonl'; $knTs = (Get-Date).ToString('o')
+1..5 | ForEach-Object { (@{ ts = $knTs; gate = 'fix-gate'; file = "C:\proj\f$_.ps1"; session = 'realsess' } | ConvertTo-Json -Compress) | Add-Content $knGc -Encoding utf8 }
+$knSid = 'kn-fire'; $knFlag = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-kaizen-nudge-$knSid.flag"); Remove-Item $knFlag -EA SilentlyContinue
+$prevUP3 = $env:USERPROFILE; $env:USERPROFILE = $knUP
+Check 'kaizen-nudge      FIRE   (pattern recurrent reel >=5 -> nudge)' ((Run 'kaizen-nudge.ps1' (J @{ session_id = $knSid })) -match 'additionalContext')
+$env:USERPROFILE = $prevUP3; Remove-Item $knFlag -EA SilentlyContinue
 
+$env:USERPROFILE = $origUP
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
 "--- $script:fails echec(s) ---"

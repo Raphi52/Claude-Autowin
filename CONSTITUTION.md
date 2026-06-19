@@ -50,10 +50,19 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
    re-challenge or surface it to the human. A self-WRITTEN test passing proves the happy path, not the absence
    of the bug class — for a boundary/discriminant fix, NAME an input that SHOULD make the test fail and confirm
    it does, else status = "self-declared, coverage-unverified", not green.
+   **Judge BEFORE the outward push**: for a SUBSTANTIAL / SECURITY-SENSITIVE / OUTWARD-FACING deliverable (a
+   hook, auth/autonomy logic, a public-repo commit) → run `judge` BEFORE commit/push, not after (a QUALITY step,
+   NOT a re-authorization — reflex 12 does not disarm it); if it hasn't run, surface "judge not yet run — push
+   anyway?". And a "green/verified" label must NAME its out-of-model authority (a hook exit-code, or a human OK),
+   else "self-declared, same-model only".
 3. **THE MOMENT you receive a report** (from a sub-agent or yourself) → verify the REAL artifact (diff, file,
    output), never the report on its word.
 4. **THE MOMENT you launch N independent tasks** → fan out IN PARALLEL (one message, several agents);
    serializing requires a justification (data dependency, unique resource, de-risking pilot).
+   **Cost VISIBLE + agent bracket before a big fan-out**: before a fan-out ≥5 sub-agents (fresh OR cumulative
+   this session), surface "~N agents this session, +M this fan-out (~Xk tok) → go?". Bracket N by regime:
+   disposable ≤2 · standard ≤3 · critical ≤5 (≤7 only critical+high-variance); exceeding needs one line of
+   justification. Never silently auto-widen a panel. (Distinct from reflex 12: that gates RE-launch; this gates a fresh fan-out's SIZE.)
 5. **THE MOMENT you calibrate effort** → regime (disposable / standard / critical); in doubt, lower + flag.
    Never over-treat the disposable nor under-treat the irreversible.
 6. **THE MOMENT a request arrives shaped as a solution** ("create X", "make Z") → trace back to the real
