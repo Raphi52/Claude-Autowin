@@ -25,6 +25,28 @@ deterministic hooks (the closure layer — the headline feature) **do not fire**
 `sleep-ok:` · `fix-ok:` · `fix-gate: off` · `gate: off` deliberately relax specific gates for a justified
 case — see `README-INSTALLATION.md`. They are honest opt-outs, not bypasses to hide.
 
+## Full-autonomy hooks (OPT-IN, OFF by default) — ⚠ dangerous
+
+Two hooks implement a "full-autonomy" toggle, both **inert unless you opt in**:
+- `full-autonomy-directive.ps1` (UserPromptSubmit) — injects a "don't ask the user, drive each task to
+  completion" directive. **Behavioral only** — it changes how Claude works, not permissions.
+- `full-autonomy-allow.ps1` (PreToolUse `*`) — returns `permissionDecision: allow` for **every** tool call,
+  so users WITHOUT `defaultMode: bypassPermissions` get unattended approval. (Redundant if you already run
+  `bypassPermissions`.)
+
+**Toggle** (either one): env var `AUTOWIN_AUTONOMY=1` (set before launching Claude Code) **or** a sentinel
+file `~/.claude/autonomy.on`. With neither set, the hooks emit nothing (normal flow). Fail-safe: an
+unreadable hook payload never auto-approves.
+
+**What stays as your net even when ON:** `deny` beats `allow` and **all** matching PreToolUse hooks still
+run → `anti-flaky` and `fix-gate` keep BLOCKING their `Write|Edit` cases; `deny`/`ask` **permission rules** in
+`settings.json` still override the hook's `allow`; the Stop-gate still blocks a false "green".
+
+**⚠ The real hole:** the kit only gates `Write|Edit`. With the allow hook ON, **destructive `Bash`
+(`rm -rf`, `git push`, prod commands, network egress) is auto-approved** — no kit hook gates Bash. If you
+enable it, keep explicit `deny`/`ask` permission rules for the dangerous Bash surface in `settings.json`
+(those win over the hook), and prefer disposable / sandboxed environments.
+
 ## Known limitation (on the roadmap, not yet fixed)
 
 When the harness does not supply a session id to a hook, session-scoping can fall back to a broader scan of

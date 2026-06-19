@@ -48,6 +48,7 @@ Chain: **scout → frame → terrain → build → judge** (`build` for a defect
 | `fix-gate.ps1` | rejects a blind fix loop without a verified cause (`CausalHypothesis:` / `fix-ok:` / `check:`) |
 | `advisory-guard.ps1` | reminds Claude to answer **DIRECTLY** on advisory questions / frustration signals (not via pipeline) |
 | `kaizen-detect` + `kaizen-nudge` + `kaizen-revert-log` | telemetry on recurring blockers → nudge → behavioral audit → **PROPOSED diff** → human OK (**never auto-write**) |
+| `full-autonomy-*.ps1` | **opt-in, OFF by default** (`AUTOWIN_AUTONOMY=1` or `~/.claude/autonomy.on`): injects a "don't ask, drive to completion" directive + auto-approves tool calls. ⚠ dangerous — see [`SECURITY.md`](SECURITY.md) |
 
 `hooks/test-hooks.ps1` verifies every hook out-of-model (parse / fires / silent on negative control).
 

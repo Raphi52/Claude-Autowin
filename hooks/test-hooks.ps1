@@ -133,6 +133,18 @@ Check 'thinking-mode SILENT (normal prompt)' (-not ((Run 'thinking-mode.ps1' (J 
 Check 'session-inject FIRE (session_id -> SESSION_ID)' ((Run 'session-inject.ps1' (J @{ session_id = 'abc123' })) -match 'SESSION_ID=abc123')
 Check 'session-inject SILENT (no session_id)' (-not ((Run 'session-inject.ps1' (J @{ prompt = 'x' })) -match 'SESSION_ID'))
 
+# --- full-autonomy hooks (toggle AUTOWIN_AUTONOMY) : OFF par defaut, ON via env, fail-safe, defere au ? ---
+$prevAuto = $env:AUTOWIN_AUTONOMY
+$env:AUTOWIN_AUTONOMY = ''   # OFF
+Check 'autonomy-directive SILENT (toggle OFF)' (-not ((Run 'full-autonomy-directive.ps1' (J @{ prompt = 'fais le truc' })) -match 'FULL-AUTONOMY'))
+Check 'autonomy-allow    SILENT (toggle OFF)' (-not ((Run 'full-autonomy-allow.ps1' (J @{ tool_name = 'Bash'; tool_input = @{ command = 'echo hi' } })) -match 'permissionDecision'))
+$env:AUTOWIN_AUTONOMY = '1'  # ON
+Check 'autonomy-directive FIRE   (toggle ON)' ((Run 'full-autonomy-directive.ps1' (J @{ prompt = 'fais le truc' })) -match 'FULL-AUTONOMY')
+Check 'autonomy-directive SILENT (? prefix defere thinking-mode, meme ON)' (-not ((Run 'full-autonomy-directive.ps1' (J @{ prompt = '? je reflechis' })) -match 'FULL-AUTONOMY'))
+Check 'autonomy-allow    FIRE   (toggle ON -> allow)' ((Run 'full-autonomy-allow.ps1' (J @{ tool_name = 'Bash'; tool_input = @{ command = 'rm -rf x' } })) -match '"permissionDecision":\s*"allow"')
+Check 'autonomy-allow    PARSE  (malforme -> pas d allow, fail-safe)' (-not ((Run 'full-autonomy-allow.ps1' 'pas du json {{') -match '"permissionDecision"'))
+$env:AUTOWIN_AUTONOMY = $prevAuto
+
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
 "--- $script:fails echec(s) ---"
