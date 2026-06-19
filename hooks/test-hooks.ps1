@@ -143,6 +143,18 @@ Check 'autonomy-directive FIRE   (toggle ON)' ((Run 'full-autonomy-directive.ps1
 Check 'autonomy-directive SILENT (? prefix defere thinking-mode, meme ON)' (-not ((Run 'full-autonomy-directive.ps1' (J @{ prompt = '? je reflechis' })) -match 'FULL-AUTONOMY'))
 Check 'autonomy-allow    FIRE   (toggle ON -> allow)' ((Run 'full-autonomy-allow.ps1' (J @{ tool_name = 'Bash'; tool_input = @{ command = 'rm -rf x' } })) -match '"permissionDecision":\s*"allow"')
 Check 'autonomy-allow    PARSE  (malforme -> pas d allow, fail-safe)' (-not ((Run 'full-autonomy-allow.ps1' 'pas du json {{') -match '"permissionDecision"'))
+# BORNE (judge fix) : sous AUTOWIN_AUTONOMY=1 les deny-gates MORDENT toujours (le toggle ne les desarme pas ; deny > allow)
+Check 'BORNE anti-flaky DENY sous autonomy ON' ((Run 'anti-flaky.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\bnd.ps1'; new_string = ('Start-Sleep' + ' -Seconds 5') } })) -match 'deny')  # sleep-ok: fixture bornee
+$stB = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-fixgate-$sid.json"); @{ 'c:\tmp\bnd.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $stB -Encoding utf8
+Check 'BORNE fix-gate DENY sous autonomy ON' ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = 'C:\tmp\bnd.ps1'; new_string = 'code' } })) -match 'deny')
+Remove-Item $stB -EA SilentlyContinue
+# toggle robustesse (judge minors) : 'YES' case-insensitive -> FIRE ; valeur non reconnue -> SILENT ; espace trim -> FIRE
+$env:AUTOWIN_AUTONOMY = 'YES'
+Check 'autonomy-allow FIRE (case-insensitive YES)' ((Run 'full-autonomy-allow.ps1' (J @{ tool_input = @{ command = 'x' } })) -match '"permissionDecision":\s*"allow"')
+$env:AUTOWIN_AUTONOMY = ' 1 '
+Check 'autonomy-allow FIRE (espace trim -> ON)' ((Run 'full-autonomy-allow.ps1' (J @{ tool_input = @{ command = 'x' } })) -match '"permissionDecision":\s*"allow"')
+$env:AUTOWIN_AUTONOMY = 'maybe'
+Check 'autonomy-allow SILENT (valeur non reconnue)' (-not ((Run 'full-autonomy-allow.ps1' (J @{ tool_input = @{ command = 'x' } })) -match '"permissionDecision"'))
 $env:AUTOWIN_AUTONOMY = $prevAuto
 
 # --- kaizen telemetry hooks (non-blocking) : detection reelle + ne polluent jamais le canal stdout ---

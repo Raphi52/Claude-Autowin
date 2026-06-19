@@ -37,7 +37,7 @@
             "type": "command",
             "command": "& \"$env:USERPROFILE/.claude/hooks/full-autonomy-allow.ps1\"",
             "shell": "powershell",
-            "statusMessage": "Full-autonomy allow (opt-in: AUTOWIN_AUTONOMY=1 or ~/.claude/autonomy.on)"
+            "statusMessage": "Full-autonomy allow (opt-in: AUTOWIN_AUTONOMY=1)"
           }
         ]
       }
@@ -116,7 +116,7 @@
             "type": "command",
             "command": "& \"$env:USERPROFILE/.claude/hooks/full-autonomy-directive.ps1\"",
             "shell": "powershell",
-            "statusMessage": "Full-autonomy directive (opt-in: AUTOWIN_AUTONOMY=1 or ~/.claude/autonomy.on)"
+            "statusMessage": "Full-autonomy directive (opt-in: AUTOWIN_AUTONOMY=1)"
           }
         ]
       }

@@ -34,13 +34,22 @@ Two hooks implement a "full-autonomy" toggle, both **inert unless you opt in**:
   so users WITHOUT `defaultMode: bypassPermissions` get unattended approval. (Redundant if you already run
   `bypassPermissions`.)
 
-**Toggle** (either one): env var `AUTOWIN_AUTONOMY=1` (set before launching Claude Code) **or** a sentinel
-file `~/.claude/autonomy.on`. With neither set, the hooks emit nothing (normal flow). Fail-safe: an
-unreadable hook payload never auto-approves.
+**Toggle**: env var `AUTOWIN_AUTONOMY=1` (case-insensitive; **set before launching Claude Code**) — env-var
+ONLY. Unset → the hooks emit nothing (normal flow). Fail-safe: an unreadable payload never auto-approves.
+*(An earlier file-sentinel toggle (`~/.claude/autonomy.on`) was removed: Claude could write that file mid-session
+to self-enable full autonomy without consent. Env-var-only closes it — the hooks read the parent Claude Code
+process environment, which Claude cannot change mid-session.)*
 
 **What stays as your net even when ON:** `deny` beats `allow` and **all** matching PreToolUse hooks still
 run → `anti-flaky` and `fix-gate` keep BLOCKING their `Write|Edit` cases; `deny`/`ask` **permission rules** in
 `settings.json` still override the hook's `allow`; the Stop-gate still blocks a false "green".
+
+**Trust assumptions** (Claude Code runtime contracts — checked against the docs and observed live): (1) when
+several PreToolUse hooks fire, `deny` beats `allow` and ALL hooks run — so the deny-gates bite even under
+full-autonomy. The per-hook *non-disarm* is unit-tested (the gates still emit `deny` with the toggle ON); the
+`deny>allow` ordering itself is the CC contract, not unit-testable in the harness. (2) The Stop-gate is
+**structural** (a Stop hook enforced by exit code), not behavioral — the directive's "always surface a
+Stop-gate block" line is defense-in-depth, not the primary enforcement.
 
 **⚠ The real hole:** the kit only gates `Write|Edit`. With the allow hook ON, **destructive `Bash`
 (`rm -rf`, `git push`, prod commands, network egress) is auto-approved** — no kit hook gates Bash. If you

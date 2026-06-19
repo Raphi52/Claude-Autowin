@@ -1,5 +1,5 @@
 # full-autonomy-allow.ps1 — PreToolUse hook (matcher "*"): PERMISSION-level full-autonomy toggle.
-# When ON (env AUTOWIN_AUTONOMY in 1/on/true/yes, OR sentinel ~/.claude/autonomy.on), auto-approves EVERY
+# When ON (env AUTOWIN_AUTONOMY in 1/on/true/yes, case-insensitive; set BEFORE launching Claude Code), auto-approves EVERY
 # tool call (permissionDecision allow) so users WITHOUT defaultMode=bypassPermissions get full autonomy.
 # NOTE: redundant on a machine already running defaultMode=bypassPermissions (no prompt left to bypass).
 # OFF by default -> emits nothing (normal permission flow). Fail-safe: unreadable stdin -> nothing (NEVER
@@ -11,6 +11,8 @@
 $ErrorActionPreference = 'SilentlyContinue'
 try { $j = [Console]::In.ReadToEnd() | ConvertFrom-Json } catch { exit 0 }
 if ($null -eq $j) { exit 0 }
-$on = ($env:AUTOWIN_AUTONOMY -match '^(1|on|true|yes)$') -or (Test-Path (Join-Path $env:USERPROFILE '.claude\autonomy.on'))
+# Toggle = env var ONLY (no file sentinel): Claude cannot change the parent Claude Code process env mid-session,
+# so it cannot self-enable. .Trim() tolerates a trailing space/newline from a shell export.
+$on = (([string]$env:AUTOWIN_AUTONOMY).Trim() -match '^(1|on|true|yes)$')
 if (-not $on) { exit 0 }
 @{ hookSpecificOutput = @{ hookEventName = 'PreToolUse'; permissionDecision = 'allow'; permissionDecisionReason = 'AUTOWIN full-autonomy: auto-approved (deny-gates + deny/ask rules still apply; deny > allow).' } } | ConvertTo-Json -Depth 10 -Compress
