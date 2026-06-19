@@ -44,6 +44,17 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Write|Edit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/build-cadence.ps1\"",
+            "shell": "powershell",
+            "statusMessage": "Build cadence (verify each increment ?)"
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {

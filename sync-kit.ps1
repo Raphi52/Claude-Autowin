@@ -20,7 +20,7 @@ $files = @(
   'hooks\anti-flaky.ps1', 'hooks\stop-gate.ps1', 'hooks\fix-gate.ps1', 'hooks\advisory-guard.ps1',
   'hooks\kaizen-detect.ps1', 'hooks\kaizen-nudge.ps1', 'hooks\kaizen-revert-log.ps1', 'hooks\test-hooks.ps1',
   'hooks\model-tier.ps1', 'hooks\judge-nudge.ps1', 'hooks\precompact-runcheck.ps1', 'hooks\thinking-mode.ps1', 'hooks\session-inject.ps1',
-  'hooks\full-autonomy-directive.ps1', 'hooks\full-autonomy-allow.ps1',
+  'hooks\full-autonomy-directive.ps1', 'hooks\full-autonomy-allow.ps1', 'hooks\build-cadence.ps1',
   'output-styles\concis-structure.md',
   'workflows\improve-from-telemetry.js'
 )

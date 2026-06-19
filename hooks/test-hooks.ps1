@@ -202,6 +202,23 @@ $prevUP3 = $env:USERPROFILE; $env:USERPROFILE = $knUP
 Check 'kaizen-nudge      FIRE   (pattern recurrent reel >=5 -> nudge)' ((Run 'kaizen-nudge.ps1' (J @{ session_id = $knSid })) -match 'additionalContext')
 $env:USERPROFILE = $prevUP3; Remove-Item $knFlag -EA SilentlyContinue
 
+# --- build-cadence : nudge mid-build (verify chaque incrément) — FIRE au seuil / SILENT sous / RESET sur verify / non-code SILENT / PARSE ---
+$bcState = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-buildcadence-$sid.json"); Remove-Item $bcState -EA SilentlyContinue
+@{ edits = 4 } | ConvertTo-Json -Compress | Set-Content $bcState -Encoding utf8
+Check 'build-cadence FIRE  (5e edit code sans verify -> nudge)' ((Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Edit'; tool_input = @{ file_path = 'C:\tmp\b.ps1' } })) -match 'BUILD CADENCE')
+@{ edits = 1 } | ConvertTo-Json -Compress | Set-Content $bcState -Encoding utf8
+Check 'build-cadence SILENT (sous le seuil)' (-not ((Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Edit'; tool_input = @{ file_path = 'C:\tmp\b.ps1' } })) -match 'BUILD CADENCE'))
+@{ edits = 4 } | ConvertTo-Json -Compress | Set-Content $bcState -Encoding utf8
+Check 'build-cadence SILENT (.md non-code -> pas d increment)' (-not ((Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Edit'; tool_input = @{ file_path = 'C:\tmp\b.md' } })) -match 'BUILD CADENCE'))
+@{ edits = 4 } | ConvertTo-Json -Compress | Set-Content $bcState -Encoding utf8
+Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Bash'; tool_input = @{ command = 'dotnet test' } }) | Out-Null
+Check 'build-cadence RESET (verify -> compteur 0)' (([int]((Get-Content $bcState -Raw | ConvertFrom-Json).edits)) -eq 0)
+@{ edits = 4 } | ConvertTo-Json -Compress | Set-Content $bcState -Encoding utf8
+Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Bash'; tool_input = @{ command = 'git commit -m "make it green"' } }) | Out-Null
+Check 'build-cadence NO-RESET (make dans un msg git != verify, anti-faux-positif)' (([int]((Get-Content $bcState -Raw | ConvertFrom-Json).edits)) -eq 4)
+Check 'build-cadence PARSE (malforme -> pas de nudge)' (-not ((Run 'build-cadence.ps1' 'bad {{') -match 'BUILD CADENCE'))
+Remove-Item $bcState -EA SilentlyContinue
+
 $env:USERPROFILE = $origUP
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 

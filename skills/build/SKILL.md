@@ -55,4 +55,6 @@ A defect is `green` in its `## Défauts` ledger entry ONLY after step 4's artifa
 
 BUILD mechanics — decompose into signal-bearing increments, red-first then green, systematic debugging, checkpoint/rollback, anti-regression cadence — are CANONICAL in `~/.claude/skills/_engine/ENGINE.md` **Ch.4 (BUILD)**. This skill wires them and adds only the build-specific delta. On divergence, the engine wins.
 
+**Cadence (mid-build — don't drift, kaizen)**: those reflexes are easy to read once and FORGET mid-fix. So they must FIRE during execution: verify EACH increment via the real signal (per ENGINE Ch.4), not only at the end — the **`build-cadence` hook** nudges after N code edits with no verify. Stuck ~3× on one cause → `scout` UNBLOCK (research, don't re-guess). Live reality ≠ the framed approach → re-`frame` (don't push the stale plan). This is the FIRING cadence + cross-skill triggers; the mechanics stay canonical in Ch.4 (NOT re-spelled here).
+
 Reflex anchor: **`CausalHypothesis:` before any edit** — a fix without a verified cause is a guess; the fix-gate blocks blind-fix loops.
