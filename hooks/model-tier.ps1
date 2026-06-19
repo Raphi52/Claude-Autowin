@@ -1,6 +1,5 @@
 # model-tier.ps1 — PreToolUse (Agent|Task): force the 'sonnet' model for Explore / general-purpose
-# sub-agents when no model is explicitly requested (cost economy). Extracted from the inline settings hook
-# (2026-06-18). Pure stdin->stdout transform.
+# sub-agents when no model is explicitly requested (cost economy). Pure stdin->stdout transform.
 $ErrorActionPreference = 'SilentlyContinue'
 try { $j = [Console]::In.ReadToEnd() | ConvertFrom-Json } catch { exit 0 }
 if ($null -eq $j) { exit 0 }

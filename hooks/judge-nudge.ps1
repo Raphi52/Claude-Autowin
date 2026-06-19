@@ -1,5 +1,5 @@
 # judge-nudge.ps1 — PostToolUse (Write|Edit): once per session, remind to run a substantial deliverable
-# through `judge` before closing (the producer does not self-certify). Extracted from inline (2026-06-18).
+# through `judge` before closing (the producer does not self-certify).
 $ErrorActionPreference = 'SilentlyContinue'
 try { $j = [Console]::In.ReadToEnd() | ConvertFrom-Json } catch { exit 0 }
 if ($null -eq $j) { exit 0 }

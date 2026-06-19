@@ -1,8 +1,8 @@
-# kaizen-nudge.ps1 — hook Stop : DÉTECTE un pattern d'échec comportemental RÉCURRENT (via kaizen-detect.ps1)
-# et NUDGE (non-bloquant) vers l'audit kaizen. NE BLOQUE JAMAIS (c'est stop-gate qui a l'autorité de blocage)
-# et N'ÉCRIT JAMAIS le kit — il propose seulement de lancer l'audit. L'écriture reste gated humain.
-# Anti-bruit : 1 nudge max / session (flag TEMP) + ledger cross-session (~/.claude/kaizen-treated.jsonl :
-# ne re-nudge un pattern déjà traité que si son count a regrimpé de >= +5).
+# kaizen-nudge.ps1 — Stop hook: DETECTS a RECURRING behavioral failure pattern (via kaizen-detect.ps1) and
+# NUDGES (non-blocking) toward the kaizen audit. NEVER BLOCKS (stop-gate holds the blocking authority) and
+# NEVER WRITES the kit — it only proposes launching the audit. Writing stays human-gated.
+# Anti-noise: 1 nudge max / session (TEMP flag) + cross-session ledger (~/.claude/kaizen-treated.jsonl:
+# re-nudge an already-treated pattern only if its count climbed back by >= +5).
 $ErrorActionPreference = 'SilentlyContinue'
 try {
     $raw = [Console]::In.ReadToEnd()
@@ -14,19 +14,19 @@ try {
     $flag = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-kaizen-nudge-$sid.flag")
     if (Test-Path $flag) { exit 0 }
 
-    # Détection : récurrence comportementale FRAÎCHE (>=5 sur 30j, anti-flaky/fix-gate seulement).
+    # Detection: FRESH behavioral recurrence (>=5 over 30d, anti-flaky/fix-gate only).
     $detect = Join-Path $env:USERPROFILE '.claude\hooks\kaizen-detect.ps1'
     if (-not (Test-Path $detect)) { exit 0 }
     $out = (& $detect -MinCount 5 -SinceDays 30) -join "`n"   # -join : capture mono-string non ambigue
     if (-not $out) { exit 0 }
-    # PS5.1 : parser dans une VARIABLE avant de filtrer (un `... | ConvertFrom-Json | Where` inline emet le
-    # tableau comme UN objet non-enumere -> $_.behavioral devient un tableau truthy et stop passe le filtre).
+    # PS5.1: parse into a VARIABLE before filtering (an inline `... | ConvertFrom-Json | Where` emits the
+    # array as ONE non-enumerated object -> $_.behavioral becomes a truthy array and stop passes the filter).
     $parsed = $out | ConvertFrom-Json
     $patterns = @($parsed | Where-Object { $_.behavioral -and $_.kind -eq 'gate' })
     if (-not $patterns.Count) { exit 0 }
     $p = ($patterns | Sort-Object count -Descending)[0]
 
-    # Ledger cross-session : ne pas re-nudger un pattern traité sans regain >= +5.
+    # Cross-session ledger: don't re-nudge a treated pattern without a >= +5 regain.
     $ledger = Join-Path $env:USERPROFILE '.claude\kaizen-treated.jsonl'
     if (Test-Path $ledger) {
         $prev = Get-Content $ledger | ForEach-Object { try { $_ | ConvertFrom-Json } catch { } } |
@@ -34,13 +34,13 @@ try {
         if ($prev -and ($p.count - [int]$prev.treatedCount) -lt 5) { exit 0 }
     }
 
-    # Poser le flag AVANT d'émettre (idempotence : un seul nudge même si le hook re-tire).
+    # Set the flag BEFORE emitting (idempotence: a single nudge even if the hook re-fires).
     New-Item -ItemType File -Path $flag -Force | Out-Null
 
-    $msg = "KAIZEN -- pattern recurrent REEL : le garde-fou << $($p.gate) >> a bloque $($p.count)x (gate-counters, hors test/dev). " +
-        "Assez de signal reel accumule -> lance la boucle TELEMETRY-DRIVEN : Workflow name 'improve-from-telemetry' " +
-        "(elle diagnostique CES blocages reels -- faux-positif a assouplir vs vrai souci a corriger -- et propose un fix score, PROPOSE only). " +
-        "Alternative : audit kaizen (judge Mode B). Rien n'est ecrit sans ton OK ; re-nudge si le pattern regagne +5."
+    $msg = "KAIZEN -- REAL recurring pattern: the guardrail << $($p.gate) >> blocked $($p.count)x (gate-counters, excluding test/dev). " +
+        "Enough real signal accumulated -> launch the TELEMETRY-DRIVEN loop: Workflow name 'improve-from-telemetry' " +
+        "(it diagnoses THESE real blocks -- false-positive to relax vs real issue to fix -- and proposes a scored fix, PROPOSE only). " +
+        "Alternative: kaizen audit (judge Mode B). Nothing is written without your OK; re-nudge if the pattern regains +5."
     (@{ hookSpecificOutput = @{ hookEventName = 'Stop'; additionalContext = $msg } } | ConvertTo-Json -Depth 6 -Compress)
 }
 catch { exit 0 }

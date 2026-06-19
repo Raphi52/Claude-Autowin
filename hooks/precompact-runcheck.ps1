@@ -1,5 +1,5 @@
 # precompact-runcheck.ps1 — PreCompact: warn if THIS session still has open RUN.md files, so ## Reprise /
-# Journal get updated before the context is summarized away. Extracted from inline (2026-06-18).
+# Journal get updated before the context is summarized away.
 $ErrorActionPreference = 'SilentlyContinue'
 try { $j = [Console]::In.ReadToEnd() | ConvertFrom-Json } catch { exit 0 }
 if ($null -eq $j) { exit 0 }

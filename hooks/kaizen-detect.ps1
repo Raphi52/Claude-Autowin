@@ -1,35 +1,35 @@
-# kaizen-detect.ps1 — détecteur DÉTERMINISTE de patterns d'échec RÉCURRENTS (substrat de l'auto-propose).
-# Lit ~/.claude/gate-counters.jsonl (loggé par anti-flaky/fix-gate/stop-gate) et sort en JSON les patterns
-# qui RÉCURRENT (même gate, ou même gate+fichier, >= seuil) sur une fenêtre. Le hook Stop l'appelle pour
-# décider s'il NUDGE vers l'audit kaizen (judge Mode B). NE PROPOSE NI N'ÉCRIT RIEN — il détecte, point.
-# Anti-bruit : ignore les sessions de test (session commençant par 'test-').
+# kaizen-detect.ps1 — DETERMINISTIC detector of RECURRING failure patterns (substrate of the auto-propose).
+# Reads ~/.claude/gate-counters.jsonl (logged by anti-flaky/fix-gate/stop-gate) and emits as JSON the patterns
+# that RECUR (same gate, or same gate+file, >= threshold) over a window. The Stop hook calls it to decide
+# whether to NUDGE toward the kaizen audit (judge Mode B). PROPOSES and WRITES NOTHING — it detects, period.
+# Anti-noise: ignores test sessions (session starting with 'test-').
 param([int]$MinCount = 3, [int]$SinceDays = 0)   # SinceDays 0 = tout l'historique
 
 $ErrorActionPreference = 'SilentlyContinue'
 $f = Join-Path $env:USERPROFILE '.claude\gate-counters.jsonl'
 if (-not (Test-Path $f)) { '[]'; exit 0 }
 $cutoff = if ($SinceDays -gt 0) { (Get-Date).AddDays(-$SinceDays) } else { [datetime]::MinValue }
-# fix (failles scout 2026-06-18) : globs de fixtures CONFIGURABLES via env KAIZEN_FIXTURE_PATHS (separes ';')
-# au lieu de chemins machine codes en dur. Defaut = les fixtures du harnais test-hooks (sous %TEMP% depuis le
-# durcissement portable) + les legacy C:\x\ / C:\tmp\. Un autre poste met SES chemins de fixtures.
+# Fixture globs CONFIGURABLE via env KAIZEN_FIXTURE_PATHS (';'-separated) instead of hardcoded machine paths.
+# Default = the test-hooks fixtures (under %TEMP% since the portable hardening) + legacy C:\x\ / C:\tmp\.
+# Another machine sets ITS own fixture paths.
 $fixtureGlobs = if ($env:KAIZEN_FIXTURE_PATHS) { $env:KAIZEN_FIXTURE_PATHS -split ';' } else { @('C:\x\*', 'C:\tmp\*', ((Join-Path ([System.IO.Path]::GetTempPath()) 'claude-test*'))) }
 
 $rows = @()
-foreach ($line in ([System.IO.File]::ReadLines($f))) {   # fix (Gemini Optimizer) : streaming, ne charge pas tout le fichier en memoire
+foreach ($line in ([System.IO.File]::ReadLines($f))) {   # streaming: does not load the whole file in memory
     if (-not $line.Trim()) { continue }
     try { $o = $line | ConvertFrom-Json } catch { continue }
     $ts = [datetime]::MinValue; try { $ts = [datetime]$o.ts } catch { }
     if ($ts -lt $cutoff) { continue }
-    if (([string]$o.session) -match '^test-') { continue }   # anti-bruit : runs de test du gate lui-même
-    $fpv = [string]$o.file; if ($fpv -and ($fixtureGlobs | Where-Object { $fpv -like $_ })) { continue }  # anti-bruit : fixtures (globs KAIZEN_FIXTURE_PATHS)
-    # anti-bruit : entrees INATTRIBUABLES (ni file ni session) = ere de dev/test du gate lui-meme, pas une
-    # decision reelle -> inadmissibles pour conclure a une habitude (audit kaizen 2026-06-16).
+    if (([string]$o.session) -match '^test-') { continue }   # anti-noise: the gate's own test runs
+    $fpv = [string]$o.file; if ($fpv -and ($fixtureGlobs | Where-Object { $fpv -like $_ })) { continue }  # anti-noise: fixtures (KAIZEN_FIXTURE_PATHS globs)
+    # anti-noise: UNATTRIBUTABLE entries (no file and no session) = the gate's own dev/test era, not a real
+    # decision -> inadmissible for concluding a habit.
     if (-not ([string]$o.file) -and -not ([string]$o.session)) { continue }
     $rows += [pscustomobject]@{ gate = [string]$o.gate; file = [string]$o.file; ts = $ts }
 }
 
-# Dedup RETRIES : 2 events du meme (gate, file) a < 5 min = UNE decision (un edit re-tente), pas N.
-# Sinon un fix re-tente 3x gonfle le compteur vers un faux "habitude systemique" (audit kaizen 2026-06-16).
+# Dedup RETRIES: 2 events of the same (gate, file) < 5 min apart = ONE decision (a retried edit), not N.
+# Otherwise a fix retried 3x inflates the counter toward a fake "systemic habit".
 $rows = @($rows | Sort-Object gate, file, ts)
 $dedup = @(); $lastKey = $null; $lastTs = $null
 foreach ($r in $rows) {
@@ -40,7 +40,7 @@ foreach ($r in $rows) {
 $rows = $dedup
 
 $patterns = @()
-# Récurrence par GATE (un type d'échec qui revient globalement = habitude systémique).
+# Recurrence by GATE (a failure type that recurs globally = a systemic habit).
 foreach ($g in ($rows | Group-Object gate)) {
     if ($g.Count -ge $MinCount) {
         $patterns += [pscustomobject]@{ kind = 'gate'; gate = $g.Name; file = '';
@@ -48,7 +48,7 @@ foreach ($g in ($rows | Group-Object gate)) {
             behavioral = (@('anti-flaky', 'fix-gate', 'revert', 'stop') -contains $g.Name) }
     }
 }
-# Récurrence par GATE+FICHIER (un fichier qui re-déclenche le même gate = pattern précis, très actionnable).
+# Recurrence by GATE+FILE (a file re-triggering the same gate = a precise, very actionable pattern).
 foreach ($gf in ($rows | Where-Object { $_.file } | Group-Object { $_.gate + '|' + $_.file })) {
     if ($gf.Count -ge $MinCount) {
         $p = $gf.Group[0]
@@ -58,10 +58,10 @@ foreach ($gf in ($rows | Where-Object { $_.file } | Group-Object { $_.gate + '|'
     }
 }
 
-# Signature stable d'un pattern (pour l'anti-bruit du hook : ne pas re-nudger le déjà-traité).
+# Stable pattern signature (for the hook's anti-noise: don't re-nudge the already-treated).
 foreach ($p in $patterns) { $p | Add-Member -NotePropertyName sig -NotePropertyValue ("$($p.kind):$($p.gate):$($p.file):$($p.count)") }
 
-# -InputObject + -Compress : tableau JSON sur UNE ligne, deterministe meme vide ('[]') ou singleton ('[{...}]')
-# -> capture `& detect` non ambigue (un pipe `@()|ConvertTo-Json` n'emet rien sur vide / desenroule un singleton).
+# -InputObject + -Compress: JSON array on ONE line, deterministic even empty ('[]') or singleton ('[{...}]')
+# -> unambiguous `& detect` capture (a pipe `@()|ConvertTo-Json` emits nothing on empty / unrolls a singleton).
 $arr = @($patterns | Sort-Object count -Descending)
 ConvertTo-Json -InputObject $arr -Depth 5 -Compress

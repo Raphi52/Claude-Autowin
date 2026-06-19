@@ -145,6 +145,22 @@ Check 'autonomy-allow    FIRE   (toggle ON -> allow)' ((Run 'full-autonomy-allow
 Check 'autonomy-allow    PARSE  (malforme -> pas d allow, fail-safe)' (-not ((Run 'full-autonomy-allow.ps1' 'pas du json {{') -match '"permissionDecision"'))
 $env:AUTOWIN_AUTONOMY = $prevAuto
 
+# --- kaizen telemetry hooks (non-blocking) : detection reelle + ne polluent jamais le canal stdout ---
+Check 'kaizen-revert-log PARSE  (malforme -> silencieux stdout)' (-not ((Run 'kaizen-revert-log.ps1' 'bad {{') -match '\S'))
+# FIRE comportemental : A->B->A = revert. gate-counters redirige vers $tmp\.claude via $env:USERPROFILE (pas de pollution prod).
+$prevUP = $env:USERPROFILE
+$revFile = Join-Path $tmp 'rev.ps1'
+$revStore = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-kaizen-revert-$sid.jsonl"); Remove-Item $revStore -EA SilentlyContinue
+$env:USERPROFILE = $tmp; New-Item -ItemType Directory -Force (Join-Path $tmp '.claude') | Out-Null
+Set-Content $revFile 'A' -Encoding utf8; Run 'kaizen-revert-log.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = $revFile } }) | Out-Null
+Set-Content $revFile 'B' -Encoding utf8; Run 'kaizen-revert-log.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = $revFile } }) | Out-Null
+Set-Content $revFile 'A' -Encoding utf8; Run 'kaizen-revert-log.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = $revFile } }) | Out-Null
+$gc = Join-Path $tmp '.claude\gate-counters.jsonl'
+Check 'kaizen-revert-log FIRE   (A->B->A = revert logge gate-counters)' ((Test-Path $gc) -and ((Get-Content $gc -Raw) -match '"gate":\s*"revert"'))
+$env:USERPROFILE = $prevUP; Remove-Item $revStore -EA SilentlyContinue
+Check 'kaizen-nudge      PARSE  (malforme -> pas de nudge)' (-not ((Run 'kaizen-nudge.ps1' 'bad {{') -match 'additionalContext|systemMessage'))
+Check 'kaizen-nudge      SILENT (compteurs propres -> pas de nudge)' (-not ((Run 'kaizen-nudge.ps1' (J @{ session_id = $sid })) -match 'additionalContext|systemMessage'))
+
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
 "--- $script:fails echec(s) ---"
