@@ -121,12 +121,14 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 - **Opt-in**: skip it and Claude Code's default response behavior is unchanged. Loads at session start.
 
 **Step 10 — (OPTIONAL) Starter memories (`memory\`)**
-- `memory\` ships a **curated, kit-generic** subset of working memories (hook/RUN.md mechanics, generic
-  workflow, a few preferences). **NOT** here, by design: machine/project-specific memories (your app, your
-  test harness, prod access…) and the **cardinal reflexes** (already in `CONSTITUTION.md` — don't double them).
+- `memory\` ships a **purpose-built, kit-generic** starter set: one fiche per pipeline skill (when/how + the
+  one trap), the kit mechanics (RUN.md & gates, maintenance), the hook-backed behavioral guardrails, and
+  generic workflow hygiene — impersonal, no personal preferences. **NOT** here, by design: machine/project-
+  specific memories (your app, your test harness, prod access…) and the **cardinal reflexes** (already in
+  `CONSTITUTION.md` — don't double them).
 - **How to treat them on install**:
-  1. Pick the `.md` files you want from `memory\` (the « Mécanique du kit » + « Workflow » ones are
-     recommended as-is; the « Préférences » ones are the author's team defaults — **adopt or skip**).
+  1. Pick the `.md` files you want from `memory\` — the **Pipeline skills** + **Operating the kit** fiches
+     are the most broadly useful; the behavioral + workflow ones are optional reinforcement.
   2. Copy them into your project's **autoMemoryDirectory** — `~/.claude/projects/<project>/memory/` (the path
      set by `"autoMemoryDirectory"` in your `settings.json`; create the folder if missing).
   3. **MERGE** (don't overwrite) the corresponding lines from `memory\MEMORY.md` into your own `MEMORY.md`

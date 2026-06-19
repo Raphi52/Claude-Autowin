@@ -1,19 +1,11 @@
 ---
 name: workflow_anti_littering
-description: "Hygiène disque — tracke ce que tu crées, supprime le transitoire en fin de tâche, garde le livrable + le journal de reprise ; jamais de suppression hors de ton scratch sans confirmation"
+description: "Disk hygiene: track the files you create; at the end of a task delete the transient ones (scratch, throwaway scripts, canary copies), keep the deliverable + its RUN.md. Never delete or overwrite anything outside your own scratch without confirmation."
 metadata:
-  type: feedback
+  node_type: memory
+  type: reference
 ---
 
-# Hygiène disque — anti-littering
+**Leave no litter.** Track every file you create during a task. At the end, delete the TRANSIENT ones (scratch files, throwaway scripts, canary copies, temporary run logs) and keep only the deliverable + its `RUN.md` ledger. Prefer the session scratchpad for temporary work; propose the cleanup rather than doing it silently if the user might want to inspect.
 
-## Principe
-Tracke les fichiers que tu crées pendant une tâche. En fin de tâche :
-- supprime le **transitoire** : scratch, sorties intermédiaires, scripts jetables, logs de run temporaires ;
-- ne garde que le **livrable** + le **journal de reprise** (le `## Reprise` du RUN.md) ;
-- **propose** le nettoyage du scratch (ne le fais pas en douce si l'utilisateur pourrait vouloir inspecter).
-
-## Garde-fou destructif
-Jamais de suppression **hors de ton propre scratch** sans confirmation explicite (`rm -Recurse`,
-`Stop-Process`, `git reset --hard`, écrasement d'un dossier système). Les livrables de code vont dans le
-repo concerné, commités uniquement sur demande explicite.
+**Trap** — never delete or overwrite anything OUTSIDE your own scratch without confirmation (`rm -Recurse`, `git reset --hard`, overwriting a shared folder); if you didn't create it (or what you find contradicts how it was described), surface it instead of removing it. Code deliverables go to the repo, committed only on explicit request. See [[workflow_files_change_multisession]].
