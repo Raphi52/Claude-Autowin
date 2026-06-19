@@ -2,6 +2,28 @@
 
 All notable changes to the kit. Versions follow the `VERSION` file.
 
+## 3.6.0 — 2026-06-19
+
+### Documentation coherence (post-churn)
+- **Hook count corrected to 16** across `README.md`, `README-INSTALLATION.md`, `VERSION` (the Step 2 list,
+  Step 7 verify, contents table, and UPDATE enumeration were stale at 8).
+- **`fixer` → `build`** rename completed (a residual `fixer` lingered in `VERSION`).
+- **`frame`** — corrected a stale ENGINE reference (`Ch.2 SCORE & RANK` → `Ch.2 JUDGE`).
+
+### Hooks
+- **`full-autonomy-directive` + `full-autonomy-allow`** documented — **opt-in, OFF by default**
+  (`AUTOWIN_AUTONOMY=1` before launch): injects a "don't ask, drive to completion" directive + auto-approves
+  tool calls (deny-gates still win). ⚠ dangerous — see `SECURITY.md`.
+- **`build-cadence`** documented — PostToolUse nudge: after N code edits with no verify, reminds to run the
+  real signal (ENGINE Ch.4); non-blocking.
+- **`judge-nudge`** — no longer burns its once-per-session reminder on `RUN.md` / memory-card writes (it skips
+  that pipeline noise while still nudging on a real `.md` doc deliverable).
+- **`git-auth-gate`** (NEW) — enforces the kit's cardinal git rule: denies `git commit` / `git push` unless
+  the user authorized this session (says commit/push/pousse, or `AUTOWIN_GIT_AUTH=1`); read-only git
+  (status/log/diff/…) passes. The #1 rule finally has deterministic enforcement (kaizen finding: lesser rules
+  all had hooks, this one didn't). Session class-auth model ("push-as-you-go": grant once, holds for the session).
+- Newly documented (previously inline): `model-tier`, `session-inject`, `thinking-mode`, `precompact-runcheck`.
+
 ## 3.5.0 — 2026-06-18
 
 ### Security

@@ -40,6 +40,17 @@
             "statusMessage": "Full-autonomy allow (opt-in: AUTOWIN_AUTONOMY=1)"
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/git-auth-gate.ps1\"",
+            "shell": "powershell",
+            "statusMessage": "Git-auth gate (commit/push autorise ?)"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -128,6 +139,12 @@
             "command": "& \"$env:USERPROFILE/.claude/hooks/full-autonomy-directive.ps1\"",
             "shell": "powershell",
             "statusMessage": "Full-autonomy directive (opt-in: AUTOWIN_AUTONOMY=1)"
+          },
+          {
+            "type": "command",
+            "command": "& \"$env:USERPROFILE/.claude/hooks/git-auth-gate.ps1\"",
+            "shell": "powershell",
+            "statusMessage": "Git-auth grant (commit/push dit ?)"
           }
         ]
       }

@@ -6,7 +6,7 @@
 > model**: a "it's green" claim is never taken at face value — it is **replayed**. Producer and judge are the
 > same model → no self-awarded "100" constitutes proof. The last line of defense is the human.
 
-**Version: 3.5.0** · 100% self-contained, **no plugins** · Windows / PowerShell.
+**Version: 3.6.0** · 100% self-contained, **no plugins** · Windows / PowerShell.
 
 > ⚠️ **Security & scope** — hooks **execute commands** read from `RUN.md` files (`signal-cmd:` / `check:`) at closure time to verify a "green" state outside the model: only use this kit in **trusted projects** (a cloned `RUN.md` is an untrusted input). The guardrail layer is **Windows/PowerShell only** (skills + the constitution are portable; hooks are not). Details: [`SECURITY.md`](SECURITY.md).
 
@@ -48,7 +48,9 @@ Chain: **scout → frame → terrain → build → judge** (`build` for a defect
 | `fix-gate.ps1` | rejects a blind fix loop without a verified cause (`CausalHypothesis:` / `fix-ok:` / `check:`) |
 | `advisory-guard.ps1` | reminds Claude to answer **DIRECTLY** on advisory questions / frustration signals (not via pipeline) |
 | `kaizen-detect` + `kaizen-nudge` + `kaizen-revert-log` | telemetry on recurring blockers → nudge → behavioral audit → **PROPOSED diff** → human OK (**never auto-write**) |
-| `full-autonomy-*.ps1` | **opt-in, OFF by default** (`AUTOWIN_AUTONOMY=1`, set before launch): injects a "don't ask, drive to completion" directive + auto-approves tool calls. ⚠ dangerous — see [`SECURITY.md`](SECURITY.md) |
+| `full-autonomy-*.ps1` | **opt-in, OFF by default** (`AUTOWIN_AUTONOMY=1`, set before launch): injects a "don't ask, drive to completion" directive + auto-approves tool calls (deny-gates still win). ⚠ dangerous — see [`SECURITY.md`](SECURITY.md) |
+| `model-tier` · `session-inject` · `thinking-mode` · `precompact-runcheck` · `judge-nudge` · `build-cadence` | wiring & non-blocking nudges: economical sub-agent model · per-turn session-id injection · `?`-thinking-mode guard · pre-compaction open-RUN reminder · "pass it through judge" reminder · mid-build verify cadence |
+| `git-auth-gate.ps1` | enforces the cardinal git rule — **no `commit`/`push` without authorization**: the user grants once per session (says commit/push, or `AUTOWIN_GIT_AUTH=1`); read-only git passes |
 
 `hooks/test-hooks.ps1` verifies every hook out-of-model (parse / fires / silent on negative control).
 

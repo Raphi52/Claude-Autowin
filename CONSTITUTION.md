@@ -86,7 +86,10 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
     re-confirmation; human-interaction itself stays 1-by-1.) **EXCEPT a costly/irreversible loop you ALREADY
     recommended stopping last turn** → before relaunching on a bare "go", ONE friction line first: "run #N,
     ~XM tokens cumulative, last delta −Y pts — relaunch?" (a 2nd go clears it). Cost must be VISIBLE for the
-    human to hold real stop-authority; never self-mute it ("without insisting").
+    human to hold real stop-authority; never self-mute it ("without insisting"). **Git carve-out (kaizen
+    2026-06-19)**: `git commit`/`push` is a greenlit class but the ONLY one ENFORCED out-of-model —
+    `git-auth-gate.ps1` denies it unless the user granted THIS session (says commit/push, or
+    `AUTOWIN_GIT_AUTH=1`); a session "push-as-you-go" grant then holds (no per-push re-ask), else it blocks.
 13. **THE MOMENT a task is read-heavy** (>3 files/queries: explore a repo, sweep sources) → delegate it to a
     sub-agent and take its CONCLUSION, not the raw dumps — cleaner context + faster. (Distinct from reflex 4,
     which parallelizes N *independent* tasks; this is ONE heavy-read task.)

@@ -6,7 +6,11 @@ if ($null -eq $j) { exit 0 }
 $fp = [string]$j.tool_input.file_path
 $sid = [string]$j.session_id
 $ext = ''; if ($fp) { $ext = [System.IO.Path]::GetExtension($fp).ToLower() }
-if ($ext -and (@('.ps1', '.cs', '.py', '.ts', '.js', '.sql', '.md') -contains $ext)) {
+# .md stays in scope (judge audits docs/specs too) — but skip the constant pipeline noise that would
+# otherwise BURN the once-per-session nudge before any real deliverable: RUN.md ledgers + memory cards.
+$leaf = ''; if ($fp) { $leaf = [System.IO.Path]::GetFileName($fp) }
+$isNoise = ($leaf -ieq 'RUN.md' -or $leaf -ieq 'MEMORY.md' -or ($fp -match '[\\/]memory[\\/]'))
+if ($ext -and (-not $isNoise) -and (@('.ps1', '.cs', '.py', '.ts', '.js', '.sql', '.md') -contains $ext)) {
     $flag = Join-Path ([System.IO.Path]::GetTempPath()) ('claude-review-nudge-' + $sid + '.flag')
     if (-not (Test-Path $flag)) {
         New-Item -ItemType File -Path $flag -Force | Out-Null

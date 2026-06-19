@@ -4,7 +4,7 @@ Installs the **self-correcting work system** on this machine: **6 skills** — t
 terrain / judge) + `build` (defect loop) + `kaizen` (improve the kit from its own failures) — + shared engine
 + a layer of **guardrail hooks** (stop-gate, anti-flaky, fix-gate, advisory-guard, kaizen system) + a
 constitution of reflexes. Designed to be deployed identically on every
-workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
+workstation. **Current version: see `VERSION` (this kit = 3.6.0).**
 
 ---
 
@@ -15,8 +15,10 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 > The update is **version-agnostic** — it upgrades from ANY previous version. Do this, then give the recap:
 
 1. **Overwrite the kit files** with the newer ones in this folder (full-file replacements, not merges):
-   `skills\scout|frame|terrain|judge|build|kaizen|_engine` , ALL of `hooks\*.ps1`
-   (`stop-gate` `anti-flaky` `fix-gate` `advisory-guard` `kaizen-detect` `kaizen-nudge` `kaizen-revert-log`),
+   `skills\scout|frame|terrain|judge|build|kaizen|_engine` , ALL of `hooks\*.ps1` (**17** — incl.
+   `model-tier` `judge-nudge` `precompact-runcheck` `session-inject` `thinking-mode` `build-cadence`
+   `git-auth-gate` `full-autonomy-directive` `full-autonomy-allow` on top of `stop-gate` `anti-flaky` `fix-gate`
+   `advisory-guard` `kaizen-detect` `kaizen-nudge` `kaizen-revert-log` `test-hooks`),
    and `output-styles\concis-structure.md` (if the user opted into the output-style — see Step 9).
 2. **Remove obsolete older-generation skills** no longer shipped here (current pipeline = `scout` `frame`
    `terrain` `judge` `build` + `_engine`). Ask before deleting (e.g. `define-need`, `review-work`, `concevoir-boucle-travail`).
@@ -25,7 +27,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
    any machine-only `## Local` section UNTOUCHED.
 4. **Hooks wiring** — make the `hooks` block in `settings.json` match `hooks\settings-snippet.json`. If the
    entries already exist, leave them; **never duplicate**. Validate the JSON parses.
-5. **What's new in 3.5.0** — security + hook hardening (RCE-by-clone closed, proof allowlist, extended anti-flaky, fail-closed, CI, LICENSE) → details in [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
+5. **What's new in 3.6.0** — the full **17-hook** set is now documented — NEW `git-auth-gate` enforces the cardinal git rule (no `commit`/`push` without a session authorization) + 8 previously-inline hooks (`model-tier` `judge-nudge` `precompact-runcheck` `session-inject` `thinking-mode` `build-cadence` `full-autonomy-directive` `full-autonomy-allow`); `full-autonomy` is **opt-in, OFF by default** (`AUTOWIN_AUTONOMY=1` — see `SECURITY.md`); `judge-nudge` no longer burns on RUN.md/memory writes. **3.5.0** — security + hook hardening (RCE-by-clone closed, proof allowlist, extended anti-flaky, fail-closed, CI, LICENSE) → details in [`CHANGELOG.md`](CHANGELOG.md). **What's new in 3.4.0 — apply if missing**:
    - **`build` skill** — the producer's named fix loop (reproduce → localize → fix → verify red→green → guard
      → loop back to judge). Copy `skills\build` (Step 1).
    - **`kaizen` skill** — improve the kit from its OWN failures: locate a failed session / recurrent pattern →
@@ -43,7 +45,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
    - **Stop-gate v3.2 — per-session scoping** (from 3.3.0): concurrent sessions no longer cross-block; skills
      write RUN.md under `Audit\workspaces\<session_id>\<subject>-workspace\`.
 6. **Reload** — restart Claude Code (hooks + output-style load only at startup).
-7. **Verify** — same pipe-tests as Step 7 below + confirm `VERSION` now reads 3.5.0. (Or run the bundled
+7. **Verify** — same pipe-tests as Step 7 below + confirm `VERSION` now reads 3.6.0. (Or run the bundled
    harness: `powershell -NoProfile -File hooks\test-hooks.ps1` → exit 0 = all hooks still bite.)
 
 > Check the kit's `VERSION` against what's installed to know the delta. When in doubt, the safe path is
@@ -62,9 +64,11 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
   overwriting/removing (this kit REPLACES older generations).
 
 **Step 2 — Hooks (the guardrails)**
-- Copy ALL of `hooks\*.ps1` → `%USERPROFILE%\.claude\hooks\` (create the folder):
+- Copy ALL of `hooks\*.ps1` → `%USERPROFILE%\.claude\hooks\` (create the folder) — **17 hooks**:
   `stop-gate.ps1`, `anti-flaky.ps1`, `fix-gate.ps1`, `advisory-guard.ps1`,
-  `kaizen-detect.ps1`, `kaizen-nudge.ps1`, `kaizen-revert-log.ps1`, `test-hooks.ps1`.
+  `kaizen-detect.ps1`, `kaizen-nudge.ps1`, `kaizen-revert-log.ps1`,
+  `model-tier.ps1`, `judge-nudge.ps1`, `precompact-runcheck.ps1`, `session-inject.ps1`, `thinking-mode.ps1`,
+  `build-cadence.ps1`, `git-auth-gate.ps1`, `full-autonomy-directive.ps1`, `full-autonomy-allow.ps1`, `test-hooks.ps1`.
 
 **Step 3 — Wire the hooks (MERGE, never overwrite)**
 - Open `%USERPROFILE%\.claude\settings.json` (create `{}` if missing).
@@ -86,7 +90,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 - Tell the user: **open `/hooks` in Claude Code (or restart)** — hooks only load at startup.
 
 **Step 7 — Verify (for REAL, not on word)**
-- Files present: 7 skill folders (6 + `_engine`) + 8 hooks (incl. `test-hooks.ps1`) + a `hooks` block in settings.json (valid JSON).
+- Files present: 7 skill folders (6 + `_engine`) + 17 hooks (incl. `test-hooks.ps1`) + a `hooks` block in settings.json (valid JSON).
 - **Stop-gate pipe-test**: create a temp folder containing `x-workspace\RUN.md` with `status: open`, pipe
   `{"cwd":"<temp>","stop_hook_active":false}` into `stop-gate.ps1` → must answer `decision:block`;
   with `status: green` → nothing. Clean up the temp.
@@ -149,6 +153,11 @@ workstation. **Current version: see `VERSION` (this kit = 3.5.0).**
 | `hooks\fix-gate.ps1` | refuses blind-fix loops without a verified cause (`CausalHypothesis:`/`fix-ok:`/`check:`) |
 | `hooks\advisory-guard.ps1` | nudge: answer advisory/frustration prompts DIRECTLY, not via the pipeline |
 | `hooks\kaizen-detect.ps1` + `kaizen-nudge.ps1` + `kaizen-revert-log.ps1` | **kaizen auto-PROPOSE loop**: recurrent-failure telemetry → Stop nudge → behavioral audit → PROPOSED diff → human OK (never auto-writes) |
+| `hooks\model-tier.ps1` · `session-inject.ps1` · `thinking-mode.ps1` · `precompact-runcheck.ps1` | wiring & guards: economical sub-agent model · per-turn session-id injection · `?`-thinking-mode guard · pre-compaction open-RUN reminder |
+| `hooks\judge-nudge.ps1` | once-per-session reminder to run a real deliverable through `judge` (skips RUN.md / memory noise) |
+| `hooks\build-cadence.ps1` | PostToolUse nudge: after N code edits with no verify, run the real signal (ENGINE Ch.4) — non-blocking |
+| `hooks\full-autonomy-directive.ps1` + `full-autonomy-allow.ps1` | **opt-in, OFF by default** (`AUTOWIN_AUTONOMY=1`): "don't ask, drive to completion" + auto-approve tool calls (deny-gates still win). ⚠ see `SECURITY.md` |
+| `hooks\git-auth-gate.ps1` | enforces the cardinal git rule: denies `commit`/`push` unless authorized this session (user says commit/push, or `AUTOWIN_GIT_AUTH=1`); read-only git passes |
 | `hooks\test-hooks.ps1` | **hook self-test** (PARSE/FIRE/SILENT per hook — catches a fail-open); run in CI (`.github/workflows/test-hooks.yml`) or in a `check:` |
 | `hooks\settings-snippet.json` | full hook wiring + economical-model tiering for sub-agents (merge) |
 | `CONSTITUTION.md` | the cardinal reflexes (incl. Advisory hard-gate + kaizen reflexes 14-18), loaded every session |

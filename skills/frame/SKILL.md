@@ -96,5 +96,5 @@ Hand off to `terrain` (regime propagated through the RUN header). **Never report
 - **Use to**: prepare HOW of autonomous execution (→ `terrain`) · judge a deliverable (→ `judge`) · find WHAT to do when no task is chosen (→ `scout`).
 
 ## Engine & reflexes
-- Shared pool mechanics — **parallel fan-out, loop-until-dry, dedup-by-core-idea, the two /100 scales (impact ⟂ autonomy-confidence), the auto-resolve-vs-surface gate, schema `gg-1`** — are CANONICAL in `_engine/ENGINE.md` **Ch.1 GENERATE & GATE** (question generation) and **Ch.2 SCORE & RANK** (Pass B scoring). On divergence, the engine wins.
+- Shared pool mechanics — **parallel fan-out, loop-until-dry, dedup-by-core-idea, the two /100 scales (impact ⟂ autonomy-confidence), the auto-resolve-vs-surface gate, schema `gg-1`** — are CANONICAL in `_engine/ENGINE.md` **Ch.1 GENERATE & GATE** (question generation) and **Ch.2 JUDGE** (its scoring & ranking mechanics, reused for Pass B). On divergence, the engine wins.
 - Reflex anchor: **solution in disguise = trap #1** — trace "create/add/make X" back to the real problem before framing anything. And **check what EXISTS before framing** (especially docs/configs): creating a duplicate is the classic expensive trap.

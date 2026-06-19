@@ -140,6 +140,11 @@ Check 'judge-nudge FIRE (code file, fresh session)' ((Run 'judge-nudge.ps1' (J @
 Check 'judge-nudge SILENT (.txt out of scope)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x.txt' } })) -match 'additionalContext'))
 Check 'judge-nudge SILENT (2e appel meme session, flag deja pose = 1x/session)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\x2.py' } })) -match 'additionalContext'))
 Remove-Item $jnflag -EA SilentlyContinue
+# judge-nudge .md handling (kit-coherence 3.6.0) : a real doc deliverable still nudges, but RUN.md / memory noise does NOT burn the 1x/session
+Check 'judge-nudge SILENT (RUN.md noise, flag frais)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\foo-workspace\RUN.md' } })) -match 'additionalContext'))
+Check 'judge-nudge SILENT (memory card noise, flag frais)' (-not ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\memory\bar.md' } })) -match 'additionalContext'))
+Check 'judge-nudge FIRE (.md doc deliverable nudge encore, flag frais)' ((Run 'judge-nudge.ps1' (J @{ session_id = $sid; tool_input = @{ file_path = 'C:\tmp\spec.md' } })) -match 'additionalContext')
+Remove-Item $jnflag -EA SilentlyContinue
 $pc = Join-Path $tmp "Audit\workspaces\$sid\pc-workspace"; New-Item -ItemType Directory -Force $pc | Out-Null; Set-Content (Join-Path $pc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
 Check 'precompact FIRE (open RUN -> systemMessage)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
 Check 'precompact SILENT (no session dir)' (-not ((Run 'precompact-runcheck.ps1' (J @{ session_id = 'none-xyz'; cwd = $tmp })) -match 'systemMessage'))
@@ -218,6 +223,32 @@ Run 'build-cadence.ps1' (J @{ session_id = $sid; tool_name = 'Bash'; tool_input 
 Check 'build-cadence NO-RESET (make dans un msg git != verify, anti-faux-positif)' (([int]((Get-Content $bcState -Raw | ConvertFrom-Json).edits)) -eq 4)
 Check 'build-cadence PARSE (malforme -> pas de nudge)' (-not ((Run 'build-cadence.ps1' 'bad {{') -match 'BUILD CADENCE'))
 Remove-Item $bcState -EA SilentlyContinue
+
+# --- git-auth-gate : enforce la regle cardinale git (commit/push) — DENY sans grant / grant via prompt / SILENT read-only / env escape / PARSE ---
+$prevGitAuth = $env:AUTOWIN_GIT_AUTH; $env:AUTOWIN_GIT_AUTH = ''
+$gaFlag = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-gitauth-$sid.flag"); Remove-Item $gaFlag -EA SilentlyContinue
+Check 'git-auth PARSE (malforme -> pas de deny)' (-not ((Run 'git-auth-gate.ps1' 'bad {{') -match 'permissionDecision'))
+Check 'git-auth DENY (git push sans grant)' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git push origin main' } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth DENY (git commit sans grant)' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git commit -m x' } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth SILENT (git status read-only)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git status --short' } })) -match 'permissionDecision'))
+Check 'git-auth DENY (git -C dir push = bypass prefixe attrape)' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git -C /repo push origin main' } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth DENY (cd x && git push chaine)' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'cd /x && git push' } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth SILENT (echo "git push" entre quotes != commande)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'echo "run git push later"' } })) -match 'permissionDecision'))
+Check 'git-auth DENY (bypass newline: git status\n git push) [judge MAJOR]' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = "git status`ngit push origin main" } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth DENY (bypass env-prefix: GIT_DIR=. git push) [judge MAJOR]' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'GIT_DIR=. git push origin main' } })) -match '"permissionDecision":\s*"deny"')
+Check 'git-auth DENY (bypass leading-space: " git push") [recheck minor]' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = ' git push origin main' } })) -match '"permissionDecision":\s*"deny"')
+Run 'git-auth-gate.ps1' (J @{ session_id = $sid; prompt = 'ok commit et push stp' }) | Out-Null
+Check 'git-auth grant pose par UserPromptSubmit (token commit/push)' (Test-Path $gaFlag)
+Check 'git-auth ALLOW (git push avec grant -> pas de deny)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git push origin main' } })) -match 'permissionDecision'))
+Remove-Item $gaFlag -EA SilentlyContinue
+Run 'git-auth-gate.ps1' (J @{ session_id = $sid; prompt = 'regarde le diff stp' }) | Out-Null
+Check 'git-auth SILENT (prompt sans token git -> pas de grant)' (-not (Test-Path $gaFlag))
+Remove-Item $gaFlag -EA SilentlyContinue
+Run 'git-auth-gate.ps1' (J @{ session_id = $sid; prompt = 'surtout ne push pas maintenant' }) | Out-Null
+Check 'git-auth SILENT (negation "ne push pas" -> pas de grant) [judge minor]' (-not (Test-Path $gaFlag))
+$env:AUTOWIN_GIT_AUTH = '1'
+Check 'git-auth ALLOW (env AUTOWIN_GIT_AUTH=1 -> standing grant)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git push origin main' } })) -match 'permissionDecision'))
+$env:AUTOWIN_GIT_AUTH = $prevGitAuth; Remove-Item $gaFlag -EA SilentlyContinue
 
 $env:USERPROFILE = $origUP
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
