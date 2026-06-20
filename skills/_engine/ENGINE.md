@@ -56,7 +56,7 @@ concepts, the skills, the reflexes — is HOW.
 scarcest resource and the only true oracle — never lulled with OK-OK. Autonomy NEVER extends to
 closure (foundation §2-3).
 
-- **Generate broadly and DIVERSELY, in parallel**: 1 generator per orthogonal lens (ONE message). Lenses —
+- **Generate broadly and DIVERSELY, in parallel**: 1 generator per orthogonal lens (ONE message), each in the **SHARPEST expert posture of its lens** ("you are the best Breaker/Naive/… — find what a generalist misses"); a sharpened posture is a free quality lever on the PRODUCER/generator side (NOT on the judge — Ch.2 has its own). Lenses —
   *questions*: Naive · Breaker · Contradictor · Perfectionist · Diplomat · Explorer · Pragmatist · Emotional.
   *Approaches*: MVP · robust · perf · lean · reuse · creative · cost · UX · convention · contrarian.
   *Improvement candidates*: grep-markers families AND stream-reading. Search for what EXISTS before

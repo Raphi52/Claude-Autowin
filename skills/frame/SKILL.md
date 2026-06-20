@@ -24,6 +24,8 @@ the **blind spots the user never articulated** — so nothing un-asked sinks the
 below is HOW that happens: the archetype questions pull the implicit out, the blind-spot sweep hunts what no
 question touched, the board-gate auto-answers the evident and surfaces to the human only what genuinely needs them.
 
+**Frame under anticipated audit (a lever)**: the Faithful `judge` WILL trace every need-claim back to a criterion (a stale/contradicted need = a defect it can flag) — producing for that falsifiable scrutiny tightens the need; it sharpens the framer, never the judge.
+
 ## Procedure
 
 ### 0. RUN file
