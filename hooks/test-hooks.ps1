@@ -49,6 +49,15 @@ Check 'REG fix-gate:off en PROSE -> DENY' ((Run 'fix-gate.ps1' (J @{ session_id 
 @{ 'c:\tmp\gr.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
 Set-Content (Join-Path $df 'RUN.md') -Value "status: green`nsession: $sid`nfix-file: gr.ps1`n[2026-01-01 00:00] GATE-VERIFIED" -Encoding utf8
 Check 'green-reset fix-gate SILENT (RUN green nommant le fichier reset le compteur)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\gr.ps1'; new_string = 'code' } })) -match 'deny'))
+# kaizen 2026-06-22 : un `fix-ok:` DANS LE CORPS du fichier edite desarme le gate pour CE fichier (pas que le diff)
+$bodyF = Join-Path $tmp 'body.xaml'
+@{ "$($bodyF.ToLower())" = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content $bodyF -Value '<UserControl><Grid/></UserControl>' -Encoding utf8   # AUCUN fix-ok dans le corps
+Check 'fix-gate FIRE  (6e edit .xaml, aucun fix-ok dans le corps)' ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = $bodyF; new_string = '<Grid Margin="1"/>' } })) -match 'deny')
+@{ "$($bodyF.ToLower())" = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content $bodyF -Value "<UserControl>`n<!-- fix-ok: refactor responsive, pas un blind-fix -->`n<Grid/></UserControl>" -Encoding utf8
+Check 'fix-gate SILENT(6e edit .xaml mais fix-ok DANS LE CORPS du fichier)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = $bodyF; new_string = '<Grid Margin="1"/>' } })) -match 'deny'))
+Remove-Item $bodyF -EA SilentlyContinue
 Remove-Item -Recurse -Force $df -EA SilentlyContinue
 Remove-Item $st -EA SilentlyContinue
 

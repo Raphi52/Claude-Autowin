@@ -5,7 +5,8 @@
 #
 # Rule: from the THRESHOLD-th edit of the SAME code file in a session -> BLOCK, UNLESS the discipline is
 # BOUND TO THAT FILE: a session RUN.md that NAMES the file AND carries a 'CausalHypothesis:' (cause + source)
-# or a 'check:' line ; OR 'fix-gate: off' (global escape) ; OR a 'fix-ok:' marker on a diff line.
+# or a 'check:' line ; OR 'fix-gate: off' (global escape) ; OR a 'fix-ok:' marker on a diff line ; OR a
+# 'fix-ok:' ALREADY PRESENT in the edited file's BODY (disarms that file — rationale written once, e.g. a comment).
 # A RUN.md 'status: green' that NAMES the file RESETS its counter ONCE per green TRANSITION (verified work
 # clears the debt; churn that CONTINUES past the green, without a new verification, re-accumulates and
 # re-blocks). Two properties make this sound: the discipline is PER-FILE (a token in one run never disarms the
@@ -92,10 +93,20 @@ try { ($state | ConvertTo-Json -Compress) | Set-Content -Path $stateFile -Encodi
 $THRESHOLD = 6   # recalibrated 4->6; see header comment
 if ($disciplined -or $count -lt $THRESHOLD) { exit 0 }
 
+# Body-level escape (kaizen 2026-06-22, gate-counters fix-gate x12): a `fix-ok:` justification ALREADY IN the
+# edited file disarms the gate for THIS file. The author writes the rationale once (e.g. a comment), but it
+# only rode in the diff of the edit that ADDED it; later edits elsewhere in the same file don't re-carry it and
+# were re-blocked (lived: MosaicView.xaml:7 had a fix-ok: comment yet edits #8/#9/#10 still blocked). Read here
+# only (we already passed the threshold -> gate would otherwise block -> no I/O on edits below threshold).
+# Per-file ($fp only), NON-EMPTY token (same regex as the diff). Counter / RUN.md-cause / green-reset untouched
+# -> a file with no token stays protected at THRESHOLD. Scope = file-lifetime within the session (consistent
+# with the diff fix-ok: being explicit + hand-written; the per-work-item RUN.md path remains for renewed justification).
+if ((Test-Path $fp) -and ((Get-Content $fp -Raw -EA SilentlyContinue) -match 'fix-ok:\s*\S')) { exit 0 }
+
 # Out-of-model telemetry (like anti-flaky)
 $counters = Join-Path $env:USERPROFILE '.claude\gate-counters.jsonl'
 $entry = (@{ ts = (Get-Date -Format o); gate = 'fix-gate'; file = $fp; edits = $count; session = $sid } | ConvertTo-Json -Compress)
 Add-Content -Path $counters -Value $entry -Encoding utf8
 
-$reason = "FIX-GATE: edit #$count of '$([System.IO.Path]::GetFileName($fp))' this session with no cause BOUND TO THIS FILE = sign of a BLIND-FIX LOOP. STOP: reproduce the bug + RESEARCH the cause (ENGINE Ch.4; scout unblock mode) BEFORE re-coding. To unblock: in a session RUN.md that NAMES this file, add 'CausalHypothesis: <cause + source>' (or 'check:'), OR 'fix-ok: <justification>' on a diff line if it is a feature/refactor (not a blind fix), OR 'fix-gate: off'. A RUN 'status: green' naming the file resets the counter (once per verified green)."
+$reason = "FIX-GATE: edit #$count of '$([System.IO.Path]::GetFileName($fp))' this session with no cause BOUND TO THIS FILE = sign of a BLIND-FIX LOOP. STOP: reproduce the bug + RESEARCH the cause (ENGINE Ch.4; scout unblock mode) BEFORE re-coding. To unblock: in a session RUN.md that NAMES this file, add 'CausalHypothesis: <cause + source>' (or 'check:'), OR 'fix-ok: <justification>' on a diff line OR already present in the file body if it is a feature/refactor (not a blind fix), OR 'fix-gate: off'. A RUN 'status: green' naming the file resets the counter (once per verified green)."
 @{ hookSpecificOutput = @{ hookEventName = 'PreToolUse'; permissionDecision = 'deny'; permissionDecisionReason = $reason } } | ConvertTo-Json -Depth 5 -Compress
