@@ -44,9 +44,10 @@ signal to choose. Read-only: scout PROPOSES the menu; it never frames, fixes, or
 
 ## Output  (default)
 ONE table, ranked most-pickable first; the **top row must be directly pickable as a `frame` input**. Scout STOPS here (the user picks a row → `frame`).
-| Score | Type | What | Why | How |
-|---|---|---|---|---|
-| 🟢\|🟡\|🔴 | 🔧 fix \| 🆕 new | what it is, 1 line | the problem it solves / the value | the concrete first step (+ `file:line` if it's a fix) |
+| # | Score | Type | What | Why | How |
+|---|---|---|---|---|---|
+| 1 | 🟢\|🟡\|🔴 | 🔧 fix \| 🆕 new | what it is, 1 line | the problem it solves / the value | the concrete first step (+ `file:line` if it's a fix) |
+- **Number every row** (`#` column, 1..N in final rank order) so the user can pick a candidate by number ("row 3 → `frame`"). The number is the PICK HANDLE, not a priority score — priority is carried by the Score band + rank order.
 - **Score = a coarse BAND** 🟢 keep / 🟡 maybe / 🔴 drop (value × feasibility × fit), **producer-judged, NOT a verified measure — never a 2-digit /100**. Rank by band, then value/effort.
 - Keep ALL internal machinery OUT of the table (per-lens scores, "taste"/"novelty"/baskets stay under the hood — only the Score band surfaces).
 - If a 🔧 and a 🆕 point at the SAME lever, add ONE line under the table saying so. Already-owned items → one line "already covered: X" at most.
