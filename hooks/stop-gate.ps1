@@ -40,6 +40,10 @@ if ($j.stop_hook_active) { exit 0 }
 
 $cwd = [string]$j.cwd
 if (-not $cwd -or -not (Test-Path $cwd)) { exit 0 }
+# Anchor replays/checks on the session cwd (kaizen 2026-06-23, gate-counters stop x2): Invoke-GateCmd otherwise
+# inherits an UNDEFINED cwd, so a RELATIVE check:/signal-cmd (e.g. `node tools/smoke.mjs`) was a latent false-BLOCK.
+# $cwd is already Test-Path-validated above. (Cross-project RUN-vs-target stays a convention matter: absolute paths.)
+$script:gateCwd = $cwd
 
 $replayWhitelist = @('dotnet test', 'dotnet build', 'cmd /c', 'powershell -NoProfile -File', 'powershell -File', 'pwsh -NoProfile -File', 'pwsh -File')
 
@@ -52,6 +56,9 @@ function Invoke-GateCmd([string]$c) {
     $psi = New-Object System.Diagnostics.ProcessStartInfo('cmd.exe', ('/c ' + $c + ' >NUL 2>&1'))
     $psi.UseShellExecute = $false
     $psi.CreateNoWindow = $true
+    # Anchor on the session cwd (kaizen 2026-06-23) -> a relative-path replay no longer false-BLOCKs from an
+    # undefined inherited cwd. An ABSOLUTE path stays cwd-insensitive; a real failure still returns its non-zero exit.
+    if ($script:gateCwd) { $psi.WorkingDirectory = $script:gateCwd }
     $p = [System.Diagnostics.Process]::Start($psi)
     if (-not $p) { return 125 }
     if (-not $p.WaitForExit($script:replayTimeoutMs)) {

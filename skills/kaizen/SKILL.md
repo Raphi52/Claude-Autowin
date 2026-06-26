@@ -17,7 +17,7 @@ description: >-
   proven: producer=judge is not proof). On EXPLICIT human OK only: (5) INTEGRATE the approved diffs, preferring
   a WIRED trigger (hook + CLAUDE.md hard rule) over a passive memory fiche (loading ≠ applying — a fiche alone
   was violated twice the same session), VERIFY each edited hook with an out-of-model signal (parse + behavior +
-  negative control), then run `sync-kit.ps1` (live→package) and log the treated signature to
+  negative control), then run `~/Desktop/Autowin/sync-kit.ps1` (live→package) and log the treated signature to
   `kaizen-treated.jsonl`. Mechanics are CANONICAL in `_engine/ENGINE.md` + `judge` Mode B; kaizen carries only
   the delta: target-location, the integrate-on-approval step, sync-kit, and the never-auto-write constraint.
   Trigger on "kaizen this session", "improve the kit from my recurring failures", "audit
@@ -54,7 +54,7 @@ auto-writes its own rules (closure authority is the human; a self-editing audit 
    - **Edit on the REAL file** (read it first — never edit on a sub-agent's report), surgically, on what is NAMED. Don't redesign deliberate, hardened mechanisms in passing (that's a blind-fix — flag it as a design question to the human instead).
    - **Trim-or-replace, don't just append (kaizen 2026-06-19)** — the constitution/memory has a FINITE attention budget (loading ≠ applying). Every reflex/fiche ADDED must FOLD into an existing one (extend a clause) or RETIRE/merge a stale one — never proliferate a new number for what an existing reflex already frames. A growing rule-count dilutes attention to ALL rules; prefer one tight clause over a new reflex.
    - **VERIFY each edited hook out-of-model** via `~/.claude/hooks/test-hooks.ps1` (per hook: parses, fires on the right input, SILENT on the negative control — it catches a closure hook gone fail-open). Extend its fixtures when you add/edit a hook, and add a `check: powershell -NoProfile -File <…>\hooks\test-hooks.ps1` line to the RUN so closure re-runs it. Never break the closure-authority hooks.
-   - **Propagate**: `sync-kit.ps1` (live→package) after editing any live skill/ENGINE/hook/output-style; a NEW file (skill/hook) must also be ADDED to the sync-kit manifest + the README install steps (the manifest is a fixed list — new items are silently missed otherwise).
+   - **Propagate**: `~/Desktop/Autowin/sync-kit.ps1` (live→package) after editing any live skill/ENGINE/hook/output-style; a NEW file (skill/hook) must also be ADDED to the sync-kit manifest + the README install steps (the manifest is a fixed list — new items are silently missed otherwise).
    - **Close the loop**: append the mandatory JSONL line to `~/.claude/kaizen-treated.jsonl` (schema in **Output**).
 
 ## Output

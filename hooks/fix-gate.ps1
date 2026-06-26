@@ -66,11 +66,24 @@ foreach ($r in $roots) {
         # not anywhere in prose -> a passing mention in the Journal no longer disarms the gate.
         $namesFile = ($base -and ($c -match ('(?im)^\s*(CausalHypothesis|check|fix-file)\b[^\r\n]*' + [regex]::Escape($base))))
         if ($globalOff -or ($hasCause -and $namesFile)) { $disciplined = $true }
+        # GREEN-RESET file match (kaizen 2026-06-23, gate-counters fix-gate x12): the green-reset is SEPARATE from
+        # the cause-disarm. A stop-gate-VERIFIED green is the STRONGEST out-of-model disarm; it must clear the file's
+        # debt even when the file is named in PROSE (signal:/Journal), not only glued to a CausalHypothesis/check/fix-file
+        # token. So the green branch uses a looser anywhere-match ($namesFileGreen) while $namesFile (above) stays
+        # token-line-strict for the cause-disarm. NOT a fail-open: the reset is DOUBLY gated below by status:green AND a
+        # REAL GATE-VERIFIED stamp (closes the g0 self-declared-green window) -> a file with no disciplined VERIFIED
+        # green stays protected at THRESHOLD. (MosaicView.xaml x5: verified green named the file on signal:/Journal only.)
+        $namesFileGreen = ($base -and ($c -match [regex]::Escape($base)))
         # A green naming the file clears the debt ONCE per TRANSITION (not on every edit).
         # Transition signature = number of GATE-VERIFIED lines (monotone: stop-gate appends one per verified green).
-        if ($namesFile -and ($c -match '(?im)^\s*status:\s*green')) {
-            $greenForFile = $true
-            $greenVerifiedCount += ([regex]::Matches($c, 'GATE-VERIFIED')).Count
+        if ($namesFileGreen -and ($c -match '(?im)^\s*status:\s*green')) {
+            $vCount = ([regex]::Matches($c, 'GATE-VERIFIED')).Count
+            # Require a REAL stop-gate GATE-VERIFIED stamp before resetting -> a self-declared green (status:green but
+            # not yet stop-gate-verified, g0) no longer disarms the gate (the fail-open the stress pass flagged).
+            if ($vCount -gt 0) {
+                $greenForFile = $true
+                $greenVerifiedCount += $vCount
+            }
         }
     }
 }
@@ -83,7 +96,22 @@ $state = @{}
 if (Test-Path $stateFile) { try { (Get-Content $stateFile -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $state[$_.Name] = $_.Value } } catch { $state = @{} } }
 $key = $fp.ToLower()
 $sigKey = $key + '::greensig'
-$count = [int]$state[$key] + 1
+$tsKey = $key + '::lastts'
+# Burst-dedup (kaizen 2026-06-25, gate-counters fix-gate x17 ALL false-positive: edit-count taxed legit iteration).
+# A RAPID burst of edits (< window) on the SAME file is ONE logical change -- e.g. replace_all on adjacent XAML
+# attributes; the audited session (11da19b5, MosaicView.xaml 6->10) showed 5/5 bursts were observe->burst->observe,
+# NOT a blind-fix loop. Count at most ONCE per window per file: a genuine blind-fix loop spaces edits by a
+# build/test (> window) so it STILL accumulates to THRESHOLD; an atomic burst collapses to one. No hole opened --
+# 'many edits without observation' is independently caught by build-cadence.ps1 (verify-based, the RIGHT signal).
+# Window override via env ($env:FIXGATE_BURST_SEC) so the test harness can exercise both directions deterministically.
+$burstSec = 30
+if ($env:FIXGATE_BURST_SEC) { try { $burstSec = [int]$env:FIXGATE_BURST_SEC } catch { } }
+$nowTicks = (Get-Date).Ticks
+$lastTicks = [long]$state[$tsKey]
+$inBurst = ($lastTicks -gt 0 -and (($nowTicks - $lastTicks) -lt [TimeSpan]::FromSeconds($burstSec).Ticks))
+$state[$tsKey] = $nowTicks
+if ($inBurst) { $count = [int]$state[$key]; if ($count -lt 1) { $count = 1 } }   # same burst -> do NOT advance
+else { $count = [int]$state[$key] + 1 }
 # Reset ONLY ONCE per green transition (different signature from the last cleared one),
 # instead of resetting on EVERY edit (which would permanently disarm the gate for that file).
 if ($greenSig -and ($greenSig -ne [string]$state[$sigKey])) { $count = 1; $state[$sigKey] = $greenSig }

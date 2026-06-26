@@ -8,7 +8,7 @@ description: >-
   doc/README/CLAUDE.md/config: trigger to CHECK it doesn't already exist and to frame its content — creating a
   file that already exists (or that misses its real content) is a classic expensive trap. This is THE default
   entry point on any substantial work — trigger YOURSELF on a solution-shaped request, without waiting for the
-  word "frame". (b) APPROACH CHOICE — the HOW for an ALREADY-chosen task (choosing WHICH task to pick → `scout`) — "which approach / architecture / library to choose for X", "explore the options" (of the already-chosen approach), "compare the
+  word "frame". EXCEPT (CLAUDE.md hard-gates): a pure ADVISORY question ("which is best / is it better to / what is / why", expecting a direct answer) → answer directly, NO frame; a still-OPEN form/premise ("not sure if X or just Y?", a question mark on the FORM itself) → stay conversational and converge the form FIRST, never route or fire a QCM presupposing a chosen form. (b) APPROACH CHOICE — the HOW for an ALREADY-chosen task (choosing WHICH task to pick → `scout`) — "which approach / architecture / library to choose for X", "explore the options" (of the already-chosen approach), "compare the
   approaches", "generate lots of solutions and have them vote", "help me decide between several designs". DO NOT use to: prepare the HOW of autonomous execution (→ `terrain`); judge the quality of a
   finished deliverable (→ `judge`); find WHAT to do on a target when no task is chosen yet (→ `scout`); run the
   heavy protocol on an obviously trivial, disposable AND already-precise one-shot (say it's oversized, offer
@@ -29,7 +29,7 @@ question touched, the board-gate auto-answers the evident and surfaces to the hu
 ## Procedure
 
 ### 0. RUN file
-Open or complete the **one** living `RUN.md`: `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` (kebab-case slug; `session:` header; session-scoping + legacy fallback → **ENGINE ch.3 / socle §1**). Set `regime:` (disposable | standard | critical) on entry. A `disposable` one-shot may need no RUN file (proportionality). Write `## Besoin` and (if reached) `## Options` here — never in separate files.
+Open or complete the **one** living `RUN.md`: `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` (kebab-case slug; `session:` header; session-scoping + legacy fallback → **ENGINE Ch.3 (RUN details) + foundation §1**). Set `regime:` (disposable | standard | critical) on entry. A `disposable` one-shot may need no RUN file (proportionality). Write `## Besoin` and (if reached) `## Options` here — never in separate files.
 
 ### Pass A — the need (always)
 

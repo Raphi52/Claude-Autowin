@@ -94,8 +94,7 @@ Degraded mode = **human hard-stop**: deliverable fate + 2-4 COSTED options + shi
 
 Final message to the user (the Report) — **in PLAIN words, NO internal jargon**. Never show raw labels (`[S]/[F]`,
 `artifact_based`, `je-1`, "out-of-model", "MIN", "ROI-stop", "canary/CANARY-BLIND", "verdict OBJECT") — translate them:
-- **Global result** + one line per dimension: score + the defect (with proof) + **what to fix to pass**
-  (not "to_reach_100"). Never a bare number.
+- **Global result** + one line per dimension: a **coarse band** (keep / maybe / drop) + the defect (with proof) + **what to fix to pass** (not "to_reach_100"). **Never a bare 2-digit /100** as the surfaced verdict — same-model draws on one artifact spread >20 pts (lived: 97/72, 96/61/58); surface the band (and the spread if you show numbers), not false-precise digits.
 - **Blind spots (what no reviewer examined)**, in plain words: the in-scope facets no lane covered (the
   `### Angles morts` sweep), or "no blind spots detected". Never silently drop an uncovered gap.
 - **Confidence caveats, said plainly** when they apply:
@@ -256,6 +255,7 @@ a skill, or memory without user OK.
 - **FIX what you audit** — judge JUDGES, it never repairs: defects always go back to the producer = the `build` skill (or you switching hats same-session; a judge NEVER audits work it just produced).
 - **Ship 100 on TEXT alone for an executable** — absent observation artifact → send back, not a sterile low note.
 - **Show raw internal jargon** in the report (`[S]/[F]`, `artifact_based`, `je-1`, "MIN", "ROI-stop", "canary/CANARY-BLIND") — translate to plain words.
+- **Emit a bare 2-digit /100** as the surfaced verdict — report a band (keep / maybe / drop) + the spread; a self-awarded precision is a judgment, not a measurement (producer=judge).
 - **Disguise a degraded/INVALID/CANARY-BLIND state as green** — surface every false-green caveat; same-model panel is not independent confirmation.
 - **Auto-write** in Mode B — PROPOSE only; never edit CLAUDE.md / a skill / memory without user OK.
 - Frame a need (→ `frame`) · prepare the autonomous loop / observability (→ `terrain`) · run a single-pass code PR (→ code-review).

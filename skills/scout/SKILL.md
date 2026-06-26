@@ -10,7 +10,7 @@ description: >-
   know WHAT to do on a target: "scout X", "what could I improve in X", "find me a task / a candidate in
   X", "where do I start on X", "any opportunities / tech debt in X", "a fresh vision for X". Looks for ALL
   types: debt/TODO/dead code, bugs/fragilities, unfinished features/UX, missing perf/tests — AND bold
-  re-imaginings. Trigger YOURSELF as soon as someone asks "what to improve / which task / where to start /
+  re-imaginings. **Default mode also runs a RELEVANCE-GATED web-anchored prior-art arm** — emerging external tools/techniques, CITED and mapped onto the target (NOT a full web sweep → that is `deep-research`). Trigger YOURSELF as soon as someone asks "what to improve / which task / where to start /
   what could this become" on a target, without waiting for the word "scout". ALSO has an **UNBLOCK mode**
   (solution-finding for a HARD/blocked technical constraint — "how do I make X work despite Y", not "what to
   improve"): trigger on "find a way to make X work despite Y",
@@ -32,14 +32,15 @@ signal to choose. Read-only: scout PROPOSES the menu; it never frames, fixes, or
 
 ## Procedure  (default mode — "what to improve / where to start on TARGET")
 1. **Locate the touchable scope FIRST** — the owned/editable perimeter (`*.sln`/`*.csproj`/`package.json`/launch scripts). EXCLUDE legacy/vendored/generated BEFORE scanning — a blind `grep TODO` over the whole tree lands in the untouchable monolith and wastes the run.
-2. **Multi-angle scan, IN PARALLEL** (1 agent per lens, ONE message; loop-until-dry: stop at 2 dry rounds or ~12 candidates; dedup by core idea). THREE lens families — do NOT limit to markers (perf/UX gaps + bold ideas are non-grep-able):
+2. **Multi-angle scan, IN PARALLEL** (1 agent per lens, ONE message; loop-until-dry: stop at 2 dry rounds or ~12 candidates; dedup by core idea). FOUR lens families (the 4th is relevance-gated) — do NOT limit to markers (perf/UX gaps + bold ideas are non-grep-able):
    - **grep-markers**: TODO/FIXME/HACK/NotImplemented · stubs/no-ops/"for now" · magic numbers/hardcodes/raw `Sleep(2000)` · empty `catch {}` swallowing logic · test-coverage gaps.
    - **flow-reading**: unfinished UX / dead paths / missing business actions (FOLLOW entry points, not markers) · perf & edges (N+1, repeated I/O, hot allocs, null/empty/boundary).
    - **bold re-imagining (→ 🆕)**: break a PREMISE ("why is it an X at all?"), borrow a metaphor, invert a default — run **CLEAN-ROOM** (do NOT read the existing; anchoring kills divergence), no `file:line`, distinct lenses must DIVERGE.
-   - **Coverage dial**: default = mostly 🔧 **+ ≥1-2 bold 🆕 GUARANTEED** (kills the linter-only blind spot); "fresh vision" request → tilt 🆕.
+   - **web-anchored prior-art (→ 🆕, RELEVANCE-GATED)**: fire ONLY if the target plausibly has external prior-art — concretely: its deps/README/name reference an external framework/tool/platform, OR the target IS itself a tool/framework/workflow/harness; SKIP a closed internal CRUD. When it fires → ONE **bounded prior-art sweep** (same research *mechanism* as UNBLOCK's step-(1) parallel docs/issues/web — but NOT its output format; self-contained bound: 1 sub-agent, a few sources, dedup): find emerging techniques/tools to ADOPT or ADAPT, then **MAP each onto a SPECIFIC target lever** (which file/module/seam it plugs into + first concrete step) — the result is a 🆕 **improvement candidate**, NOT a solution-approach to a named blocker (that's UNBLOCK). ≥1 guaranteed when it fires, **cap: at most 3**. **Distinct from clean-room** (which stays anti-anchoring): this lens deliberately anchors on prior-art — different blind spots, never merged. **Survives** iff it carries a **CITED source** + an explicit mapping to a target lever (a generic "adopt X" with no fit → reject); **in the output table** it shows that source in the How column, marked *external prior-art* (never dressed as a verified-fit fix), Score band = **fit-to-target**, not the tool's popularity.
+   - **Coverage dial**: default = mostly 🔧 **+ ≥1-2 bold 🆕 GUARANTEED** (kills the linter-only blind spot) **+ ≥1 web-anchored 🆕 when the target has external prior-art** (relevance-gated; skip on a closed internal target); "fresh vision" request → tilt 🆕.
 3. **Gate — a raw hit is NOT a candidate (TYPE-AWARE).** First cull false positives (`Sleep(pollMs)` legit → discard vs `Sleep(2000)` → keep; best-effort `catch {}` → discard vs swallowing a real error → keep). Then tag, each faces its OWN gate:
    - **🔧 fix** survives iff: REAL defect + BOUNDED + a real `file:line` + a MEASURABLE done-signal (build green / test red→green / reproducible metric). "Improve the UX" with no done-signal → reject.
-   - **🆕 new** survives iff: a clear **Why** + a concrete first step as **How** (no `file:line` — it doesn't exist yet). Vague "make it better" → reject.
+   - **🆕 new** survives iff: a clear **Why** + a concrete first step as **How** (no `file:line` — it doesn't exist yet). Vague "make it better" → reject. (A **web-anchored** 🆕 carries an extra survival rule — defined in its lens above.)
 4. **Ownership / duplicate check.** Already covered by a skill / test / ticket → flag **owned**, exclude. **Before ANY 🆕** grep the kit + live copy + neighbours for an existing version FIRST (reflex 6 — trap #1 = the duplicate): if it exists → reframe to "wire / finish / distribute it", NEVER "create from scratch".
 
 ## Output  (default)
@@ -53,13 +54,14 @@ ONE table, ranked most-pickable first; the **top row must be directly pickable a
 - If a 🔧 and a 🆕 point at the SAME lever, add ONE line under the table saying so. Already-owned items → one line "already covered: X" at most.
 
 ## Modes
-- **default** (Procedure + Output above) — trigger: "what to improve / which task / where to start / what could this become" on a target.
+- **default** (Procedure + Output above) — trigger: "what to improve / which task / where to start / what could this become" on a target. Its web-anchored lens (above) seeds a FEW target-mapped candidates as a RELEVANCE-GATED side-arm — NOT a full web sweep. Boundary: a NAMED blocker to get around → **UNBLOCK** (full research arm); a standalone cited ecosystem REPORT → **`deep-research`** (separate skill, not scout).
 - **UNBLOCK** — trigger: "how do I make X work despite blocker Y / get around this limit / there must be a way" (a desired capability stopped by a constraint, NOT "what to improve"). The candidate is a **solution-approach**. In ORDER: **(1) RESEARCH ARM FIRST** (parallel prior-art: docs/issues/web — is the blocker a DOCUMENTED platform limit? what techniques do others use? **NEVER declare "impossible/intrinsic" without a CITED source** — the scar this mode prevents). **(2) PREMISE-BREAK** (challenge "why must Y hold?", borrow adjacent domains, invert defaults; DISTINCT approaches, not variants). **(3) Rank by FEASIBILITY × FIT** — each approach carries: technique · premise broken · feasibility-seed (smallest real step + CITED fact) · cost · *does it PRESERVE the user's must-keep constraints?* (a violator is ranked last/dropped, said so). **Output** = table `Approach · How · Preserves <constraint>? · Feasibility-seed (+source) · Cost`. Honest close: a genuine limit → state it WITH the citation + the closest-fitting approach, never a bare "impossible".
 
 ## Don't
 - **FIX / execute** — scout PROPOSES, touches nothing (read-only).
 - Merely **LOCATE** known code → that's the `Explore` agent (scout RANKS opportunities, it doesn't locate).
 - **Frame** an already-chosen need → `frame` · review a diff → code-review · judge a deliverable → `judge` · audit a behavior/workflow → `judge` Mode B.
+- **Answer a pure ADVISORY question** ("which is best / what is X / why" — expects a direct answer, names no target to scan) → answer directly (CLAUDE.md ADVISORY hard-gate). (A "what to do / where to start on TARGET" question IS scout's job — derive it, don't bounce it back to the user.)
 - Emit a **/100**, per-lens scores, or internal jargon in the output table.
 
 ## Engine & reflexes

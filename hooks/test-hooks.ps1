@@ -49,6 +49,14 @@ Check 'REG fix-gate:off en PROSE -> DENY' ((Run 'fix-gate.ps1' (J @{ session_id 
 @{ 'c:\tmp\gr.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
 Set-Content (Join-Path $df 'RUN.md') -Value "status: green`nsession: $sid`nfix-file: gr.ps1`n[2026-01-01 00:00] GATE-VERIFIED" -Encoding utf8
 Check 'green-reset fix-gate SILENT (RUN green nommant le fichier reset le compteur)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\gr.ps1'; new_string = 'code' } })) -match 'deny'))
+# kaizen 2026-06-23 #1 : le green-reset accepte le fichier nomme en PROSE/signal (pas une ligne-token) DES LORS qu un GATE-VERIFIED reel est present -> reset -> SILENT (red avant le fix : $namesFile strict ne matchait pas 'signal:')
+@{ 'c:\tmp\prose.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content (Join-Path $df 'RUN.md') -Value "status: green`nsession: $sid`nsignal: refactor prose.ps1 verifie`n[2026-01-01 00:00] GATE-VERIFIED" -Encoding utf8
+Check 'kz1 green-reset SILENT (fichier en prose/signal + GATE-VERIFIED -> reset)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\prose.ps1'; new_string = 'code' } })) -match 'deny'))
+# kaizen 2026-06-23 #1 DURCISSEMENT (anti fail-open g0) : un green AUTO-DECLARE (status:green nommant le fichier mais SANS GATE-VERIFIED) ne reset PAS -> DENY
+@{ 'c:\tmp\g0.ps1' = 5 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
+Set-Content (Join-Path $df 'RUN.md') -Value "status: green`nsession: $sid`nsignal: g0.ps1 pas encore verifie par stop-gate" -Encoding utf8
+Check 'kz1 g0 FIRE (green auto-declare sans GATE-VERIFIED ne reset pas -> deny)' ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = $tmp; tool_input = @{ file_path = 'C:\tmp\g0.ps1'; new_string = 'code' } })) -match 'deny')
 # kaizen 2026-06-22 : un `fix-ok:` DANS LE CORPS du fichier edite desarme le gate pour CE fichier (pas que le diff)
 $bodyF = Join-Path $tmp 'body.xaml'
 @{ "$($bodyF.ToLower())" = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
@@ -57,6 +65,18 @@ Check 'fix-gate FIRE  (6e edit .xaml, aucun fix-ok dans le corps)' ((Run 'fix-ga
 @{ "$($bodyF.ToLower())" = 6 } | ConvertTo-Json -Compress | Set-Content $st -Encoding utf8
 Set-Content $bodyF -Value "<UserControl>`n<!-- fix-ok: refactor responsive, pas un blind-fix -->`n<Grid/></UserControl>" -Encoding utf8
 Check 'fix-gate SILENT(6e edit .xaml mais fix-ok DANS LE CORPS du fichier)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = $bodyF; new_string = '<Grid Margin="1"/>' } })) -match 'deny'))
+# burst-dedup (kaizen 2026-06-25, gate-counters fix-gate x17 FP) : une RAFALE d edits <30s sur le MEME fichier = 1 -> PAS de block meme a 8 edits
+'{}' | Set-Content $st -Encoding utf8
+$burstDeny = $false
+1..8 | ForEach-Object { if ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = 'C:\tmp\burst.ps1'; new_string = "code $_" } })) -match 'deny') { $burstDeny = $true } }
+Check 'burst-dedup fix-gate SILENT (8 edits rapides <30s = 1 burst -> pas de block)' (-not $burstDeny)
+# anti fail-open : override FIXGATE_BURST_SEC=0 desactive le dedup -> 6 edits comptent encore -> block (le compteur de fond est intact)
+$prevBurst = $env:FIXGATE_BURST_SEC; $env:FIXGATE_BURST_SEC = '0'
+'{}' | Set-Content $st -Encoding utf8
+$ovDeny = $false
+1..6 | ForEach-Object { if ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = 'C:\tmp\ovr.ps1'; new_string = "code $_" } })) -match 'deny') { $ovDeny = $true } }
+Check 'burst-dedup OFF via env (FIXGATE_BURST_SEC=0) : 6 edits rapides -> block (compteur de fond intact)' $ovDeny
+$env:FIXGATE_BURST_SEC = $prevBurst
 Remove-Item $bodyF -EA SilentlyContinue
 Remove-Item -Recurse -Force $df -EA SilentlyContinue
 Remove-Item $st -EA SilentlyContinue
@@ -139,6 +159,14 @@ New-Item -ItemType Directory -Force -Path $d | Out-Null
 [IO.File]::WriteAllText((Join-Path $d 'RUN.md'), "status: green`nsession: $sid`nregime: disposable`nderniere ligne SANS NL")
 Run 'stop-gate.ps1' $sg | Out-Null
 Check 'REG(Gemini) GATE-VERIFIED sur sa propre ligne (RUN.md sans NL final)' ((Get-Content (Join-Path $d 'RUN.md'))[-1] -match '^\s*\[[^\]]*\]\s*GATE-VERIFIED\s*$')
+# kaizen 2026-06-23 #2 : un check: a chemin RELATIF est rejoue depuis $cwd ancre -> trouve le script -> PASSE (red avant le fix : cwd non ancre -> script introuvable -> exit!=0 -> block)
+Set-Content (Join-Path $tmp 'gate-rel-ok.ps1') -Value 'exit 0' -Encoding utf8
+MkRun "status: green`nsession: $sid`nregime: standard`ncheck: powershell -NoProfile -File gate-rel-ok.ps1"
+Check 'kz2 stop-gate PASSE (check chemin relatif rejoue depuis cwd ancre)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# kaizen 2026-06-23 #2 (anti fail-open) : un check relatif qui ECHOUE (exit 1) depuis le bon cwd bloque toujours -> l ancrage ne masque pas un vrai echec
+Set-Content (Join-Path $tmp 'gate-rel-ko.ps1') -Value 'exit 1' -Encoding utf8
+MkRun "status: green`nsession: $sid`nregime: standard`ncheck: powershell -NoProfile -File gate-rel-ko.ps1"
+Check 'kz2 stop-gate BLOQUE (check relatif exit 1 depuis cwd ancre -> block, no fail-open)' ((Run 'stop-gate.ps1' $sg) -match 'block')
 
 # --- extracted inline hooks (2026-06-18) : model-tier / judge-nudge / precompact-runcheck / thinking-mode / session-inject ---
 Check 'model-tier FIRE (Explore, no model -> sonnet)' ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'Explore' } })) -match 'sonnet')

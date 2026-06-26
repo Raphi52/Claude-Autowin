@@ -15,7 +15,7 @@ concepts, the skills, the reflexes — is HOW.
 ## ⚡ THE FOUNDATION — the only 7 things to keep in mind (day-1; everything else is CONSULTED)
 
 1. **One task = ONE file**: `RUN.md` in its **session-scoped** workspace (`Audit\workspaces\<session_id>\<subject>-workspace\` — the `session_id` is injected every turn by the UserPromptSubmit hook; Stop-gate v3.2 enforces ONLY the runs of its own session → no more cross-blocking between concurrent sessions).
-   Header: `status: open|green|red|degraded-closed` · `regime:` · `signal:` · `signal-cmd:` (optional) · `session:` (scope; otherwise the `<session_id>\` location is authoritative) · `gate: off` (justified opt-out).
+   Header: `status: open|green|red|degraded-closed` · `regime:` · `signal:` · `signal-cmd:` (optional, REPLAYABLE) · `signal-attestable:` (optional — non-replayable out-of-model proof, e.g. capture read + run-stamp; in CRITICAL, satisfies the proof requirement when there is neither `signal-cmd` nor `check:`) · `session:` (scope; otherwise the `<session_id>\` location is authoritative) · `gate: off` (justified opt-out).
    ⚠️ `signal-cmd` is executed via `cmd /c` EXACTLY as written — it is an artifact too: **quote every
    path containing spaces**, and never declare a command you have not run yourself at least once.
    (Scar from the first live replay: an unquoted `C:\Mon Projet\…` made a green unrepayable even though
@@ -59,7 +59,7 @@ closure (foundation §2-3).
 - **Generate broadly and DIVERSELY, in parallel**: 1 generator per orthogonal lens (ONE message), each in the **SHARPEST expert posture of its lens** ("you are the best Breaker/Naive/… — find what a generalist misses"); a sharpened posture is a free quality lever on the PRODUCER/generator side (NOT on the judge — Ch.2 has its own). Lenses —
   *questions*: Naive · Breaker · Contradictor · Perfectionist · Diplomat · Explorer · Pragmatist · Emotional.
   *Approaches*: MVP · robust · perf · lean · reuse · creative · cost · UX · convention · contrarian.
-  *Improvement candidates*: grep-markers families AND stream-reading. Search for what EXISTS before
+  *Improvement candidates*: grep-markers families AND stream-reading AND (relevance-gated) web-anchored prior-art (external tools/techniques mapped onto the target, CITED — scout default mode). Search for what EXISTS before
   proposing, cite the facts; output CONCRETE-EXTREME (`Dupont,"Le Grand"\nSARL`) — abstractions are rejected on receipt. **Loop-until-dry**: each turn receives what was already found ("NEW only"); stop at 2 dry turns OR cap
   (~12 candidates / ~10 turns, log what was cut). **Dedup by core-idea** before scoring. Exclusive resources
   (build/bench/DB/port): one owner only — isolate or serialize.
@@ -189,7 +189,12 @@ symptom → promote the lesson to code (`check:` / regression test). **Cost cap:
 (edit+build+run) costs more than research → 2nd blind fix on unknown cause = STOP code, RESEARCH
 first (the human costs as much as one trial: search BEFORE escalating); 3 failed fixes → parallel resolvers with orthogonal hypotheses.** **Anti-diagnostic-drift: root cause that CHANGES ≥2× in a
 run → STOP, publish {retained hypothesis · out-of-model proof that anchors it · discarded hypotheses} and get
-it VALIDATED before resuming — otherwise the user becomes your falsifier.**
+it VALIDATED before resuming — otherwise the user becomes your falsifier.** **fix-gate disarm tokens**
+*(operational — `fix-gate.ps1`)*: the gate blocks >6 same-file edits with no cause. Disarm a legit iteration
+via a TOKEN LINE in the session RUN.md — `CausalHypothesis:` / `check:` (real cause + names the file →
+disarms mid-flight) — or, for non-bug churn on a long-lived UI/layout file, `fix-file: <basename>` (names the
+file, but ALONE only **resets** the counter on a `status: green` RUN, once per verified-green transition — it
+does NOT disarm mid-flight). One-off on a single edit: inline `fix-ok: <why>` in the edited file.
 
 **Green checkpoint + rollback**: before each risky increment, a NAMED restorable green (commit/tag —
 disposable worktree mounted by terrain); CONFIRMED regression (re-run, not a flake) → return to the last
