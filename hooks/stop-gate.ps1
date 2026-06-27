@@ -105,7 +105,9 @@ foreach ($d in $wsDirs) {
     $all = @(Get-Content $run -Encoding UTF8 -ErrorAction SilentlyContinue)
     if (-not $all) { continue }
     $head = $all | Select-Object -First 14
-    if (($head | Where-Object { $_ -match '^\s*gate:\s*off\s*$' })) { continue }
+    # 'gate: off' disarms the gate. Tolerate a TRAILING HTML COMMENT (the natural justified-opt-out form,
+    # e.g. 'gate: off <!-- why -->') but NOT arbitrary junk ('gate: off blah' / 'gate: offset' still enforce).
+    if (($head | Where-Object { $_ -match '^\s*gate:\s*off\s*(<!--.*)?$' })) { continue }
     # Enforce ONLY runs of THIS session: mine if under Audit\workspaces\<my id>\ OR header
     # "session: <my id>". Otherwise (other session / legacy unstamped) => IGNORE. Fallback: no session_id => legacy.
     $owned = $false
@@ -213,6 +215,22 @@ foreach ($d in $wsDirs) {
         $hasAttest = [bool]($head | Where-Object { $_ -match '^\s*signal-attestable:\s*\S' })
         if (-not ($cmdMeaningful -or $hasMeaningfulCheck -or $hasAttest)) {
             $failures += 'CRITICAL without MEANINGFUL out-of-model proof (signal-cmd/check = test/build runner or script, or signal-attestable: required)'
+        }
+    }
+
+    # (e) DoD CHECKLIST (non-disposable): a REAL-CONTENT unchecked box "- [ ]" inside ## Besoin = an unmet
+    # exit condition -> BLOCK. DETERMINISTIC and BOX-STATE ONLY (the gate cannot read the PROOF behind a
+    # checked box -> that stays judge+human). Scoped to ## Besoin (the DoD's home). A PLACEHOLDER box
+    # ("- [ ] <...>", value starting with '<') does NOT count (mirror anti-fixation) -> no false-block on an
+    # unfilled scaffold. Legacy RUN with a prose criterion (no boxes) = nothing to match -> passes. ASCII-only.
+    if ($regime -ne 'disposable') {
+        $inBesoin = $false
+        foreach ($ln in $all) {
+            if ($ln -match '^\s*##\s+Besoin\b') { $inBesoin = $true; continue }
+            if ($inBesoin -and $ln -match '^\s*##\s') { $inBesoin = $false }
+            if ($inBesoin -and $ln -match '^\s*[-*+]\s*\[\s*\]\s*[^<\s]') {
+                $failures += ('DoD item NON TENU (case non cochee) dans ## Besoin: ' + $ln.Trim())
+            }
         }
     }
 

@@ -21,8 +21,9 @@ concepts, the skills, the reflexes — is HOW.
    (Scar from the first live replay: an unquoted `C:\Mon Projet\…` made a green unrepayable even though
    it had been verified 5× — the gate rejected it, rightly.)
 2. **One blocking gate: closure.** Run `open`/`red` → the end of turn is blocked. Run `green` → the gate
-   does NOT take your word for it: it **replays** `signal-cmd` (idempotent whitelist), **executes** your `check:` lines and
-   verifies anti-fixation — once per transition. Everything else annotates, or does not exist.
+   does NOT take your word for it: it **replays** `signal-cmd` (idempotent whitelist), **executes** your `check:` lines,
+   verifies anti-fixation, and **blocks an unchecked real-content DoD box (`- [ ]`) in `## Besoin`** (box-state only;
+   the proof behind a checked box stays judge+human) — once per transition. Everything else annotates, or does not exist.
 3. **Honest verdict: GREEN / RED / INVALID — INVALID by default.** Absence of proof is never a
    green. A green without an out-of-model artifact is stated as: "self-declared, unverified". **Same for every
    conclusion stated along the way** ("it's X · impossible · intrinsic · it's fixed"): labeled
@@ -136,7 +137,7 @@ need, no out-of-scope, no dead/debug code, no secrets, no spurious reformatting.
 ## Ch.3 — RUN, details *(used for standard/critical runs; foundation §1-2 is enough for daily work)*
 
 **Sections** (single-writer: the orchestrator alone writes; sub-agents return typed JSON → events):
-`## Besoin` (deep-why, scope in/out, success criterion, deliberate decisions) · `## Options` (≥3 scored +
+`## Besoin` (deep-why, scope in/out, success criterion = cochable DoD checklist judge ticks item-by-item — disposable: one-liner, deliberate decisions) · `## Options` (≥3 scored +
 `Décision:`) · `## Journal` (append-only: `[ts] unit=<id> run=<stamp> VERIFIED|FAILED|FLAKY|CLAIM|PROOF|USER-OK`) ·
 `## Défauts` (the judge's ledger) · `## Reprise` (Goal/Hypothesis/Tried/Next/Blockers + counters) ·
 `## Cicatrices` (run lessons — volatile to HYPOTHESIS) · `## Checks` (`check: <command>` — foundation §6).

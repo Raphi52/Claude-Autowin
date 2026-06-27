@@ -106,6 +106,14 @@ MkRun "status: open`nsession: $sid"
 Check 'stop-gate FIRE  (status open)' ((Run 'stop-gate.ps1' $sg) -match 'block')
 MkRun "status: open`nsession: $sid`ngate: off"
 Check 'stop-gate SILENT(gate off)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: open`nsession: $sid`ngate: off   <!-- justification opt-out -->"
+Check 'gate:off + commentaire trailing -> SILENT (desarme)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: open`nsession: $sid`ngate: off mais pas vraiment"
+Check 'gate:off + junk (pas un commentaire) -> BLOQUE (no false-disarm)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+MkRun "status: open`nsession: $sid`ngate: off<!--no-space-->"
+Check 'gate:off + commentaire sans espace -> SILENT (desarme)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: open`nsession: $sid`ngate: off -->"
+Check 'gate:off + closing comment orphelin -> BLOQUE (no false-disarm)' ((Run 'stop-gate.ps1' $sg) -match 'block')
 # fix #8 (failles scout) : stdin illisible = fail-CLOSED (block) ; stdin vide = rien
 Check '#8 stop-gate BLOQUE (stdin illisible = fail-closed)' ((Run 'stop-gate.ps1' 'pas du json {{') -match 'block')
 Check '#8 stop-gate SILENT(stdin vide)' (-not ((Run 'stop-gate.ps1' '') -match 'block'))
@@ -167,6 +175,19 @@ Check 'kz2 stop-gate PASSE (check chemin relatif rejoue depuis cwd ancre)' (-not
 Set-Content (Join-Path $tmp 'gate-rel-ko.ps1') -Value 'exit 1' -Encoding utf8
 MkRun "status: green`nsession: $sid`nregime: standard`ncheck: powershell -NoProfile -File gate-rel-ko.ps1"
 Check 'kz2 stop-gate BLOQUE (check relatif exit 1 depuis cwd ancre -> block, no fail-open)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+# (e) DoD checklist enforcement (kaizen 2026-06-26) : case reelle non cochee dans ## Besoin = item non tenu -> BLOCK (etat de case, deterministe)
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [ ] livrer le module (preuve: test)`n## Options"
+Check 'DoD FIRE  (case reelle non cochee dans Besoin -> block)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [x] livrer le module (preuve: test)`n## Options"
+Check 'DoD SILENT(tout coche [x] -> pass)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [ ] <condition de sortie 1> (preuve: ...)`n## Options"
+Check 'DoD SILENT(placeholder <...> non coche -> ignore, pas de false-block)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`nCritere de succes: prose sans case`n## Options"
+Check 'DoD SILENT(legacy prose 0 case -> pass)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: green`nsession: $sid`nregime: disposable`n## Besoin`n- [ ] item reel non coche`n## Options"
+Check 'DoD SILENT(disposable exempt meme avec case non cochee)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [x] fait`n## Reprise`n- [ ] item hors Besoin"
+Check 'DoD SILENT(case non cochee HORS ## Besoin -> scope respecte, pas de block)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 
 # --- extracted inline hooks (2026-06-18) : model-tier / judge-nudge / precompact-runcheck / thinking-mode / session-inject ---
 Check 'model-tier FIRE (Explore, no model -> sonnet)' ((Run 'model-tier.ps1' (J @{ tool_input = @{ subagent_type = 'Explore' } })) -match 'sonnet')
@@ -283,6 +304,16 @@ Check 'git-auth SILENT (prompt sans token git -> pas de grant)' (-not (Test-Path
 Remove-Item $gaFlag -EA SilentlyContinue
 Run 'git-auth-gate.ps1' (J @{ session_id = $sid; prompt = 'surtout ne push pas maintenant' }) | Out-Null
 Check 'git-auth SILENT (negation "ne push pas" -> pas de grant) [judge minor]' (-not (Test-Path $gaFlag))
+# QCM-click authorization (kaizen 2026-06-26) : une reponse AskUserQuestion autorisant git arme le grant au PreToolUse (le clic n a pas de champ prompt -> jamais vu par UserPromptSubmit).
+Remove-Item $gaFlag -EA SilentlyContinue
+$gaTsPos = Join-Path $env:TEMP "th-qcm-pos-$sid.jsonl"
+'{"type":"user","toolUseResult":{"answers":{"Que faire ?":"Commiter skill + README"}}}' | Set-Content $gaTsPos -Encoding utf8
+Check 'git-auth ALLOW (clic QCM "Commiter" -> grant)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; transcript_path = $gaTsPos; tool_input = @{ command = 'git commit -m x' } })) -match 'permissionDecision'))
+Remove-Item $gaFlag -EA SilentlyContinue
+$gaTsNeg = Join-Path $env:TEMP "th-qcm-neg-$sid.jsonl"
+'{"type":"user","toolUseResult":{"answers":{"Que faire ?":"Ne pas commiter, finaliser le post"}}}' | Set-Content $gaTsNeg -Encoding utf8
+Check 'git-auth DENY (clic QCM "Ne pas commiter" -> negation respectee)' ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; transcript_path = $gaTsNeg; tool_input = @{ command = 'git commit -m x' } })) -match '"permissionDecision":\s*"deny"')
+Remove-Item $gaFlag, $gaTsPos, $gaTsNeg -EA SilentlyContinue
 $env:AUTOWIN_GIT_AUTH = '1'
 Check 'git-auth ALLOW (env AUTOWIN_GIT_AUTH=1 -> standing grant)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git push origin main' } })) -match 'permissionDecision'))
 $env:AUTOWIN_GIT_AUTH = $prevGitAuth; Remove-Item $gaFlag -EA SilentlyContinue

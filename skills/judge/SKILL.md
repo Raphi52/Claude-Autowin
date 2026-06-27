@@ -38,7 +38,7 @@ would re-make it the producer), and closure stays out-of-model: producer=judge i
 **1. Deliverable.** Obtain its path/content. Missing → ask once.
 
 **2. The RUN.md** — the one file matching glob `*-workspace\RUN.md` under `Audit\workspaces\<session_id>\` (the session folder injected by the UserPromptSubmit hook — one folder per session; Stop-gate v3.2 scopes enforcement to it). Fallback: the legacy flat `Audit\workspaces\*-workspace\RUN.md` if no session folder exists. Repo-root cwd; no machine-specific absolute path baked into the skill.
-  - `## Besoin` = **the fidelity reference**: deep-why, scope in/out, success criterion. The Faithful judge
+  - `## Besoin` = **the fidelity reference**: deep-why, scope in/out, success criterion — now a **cochable DoD checklist** (`- [ ]` items). **Walk each item against its proof; any unmet item = a MAJOR defect** (not a mere blind spot; a legacy prose criterion with no `- [ ]` → verify it holistically as one item). Enforcement split (rule in `RUN-template.md`, single source): the **stop-gate** deterministically blocks green on an unchecked real-content box; the **proof behind a checked box** is judge + human (the gate can't read proof substance). The Faithful judge
     has the RIGHT to flag a **stale/contradicted need** as a MAJOR defect — never judge blindly against it.
   - **Deliberate decisions** (in `## Besoin`/`## Options`) = voluntary choices → judges must NOT re-flag.
   - `## Défauts` = **the ledger**, re-read cross-session (cycles consumed, global-min trajectory,
@@ -193,7 +193,7 @@ prefix (need + criteria + decisions) then the volatile last-cycle delta only.
 >
 > *Read the deliverable: `<path/content>`.
 > [Faithful only: read the need (`## Besoin` of `<RUN.md path>`). You have the RIGHT to flag a
-> stale/suspect/contradicted need as a MAJOR defect.]
+> stale/suspect/contradicted need as a MAJOR defect. **Walk the DoD checklist: each `- [ ]` item must hold against its proof — any unmet/unverifiable item = a MAJOR defect (need not met); a legacy prose criterion (no items) → verify holistically.**]
 > [Real-effect only: do NOT score on reading — confront ≥1 concrete case with the observation artifact
 > PROVIDED BY THE PRODUCER; artifact ABSENT → SEND BACK (do not loop a low note).]*
 >

@@ -12,12 +12,14 @@ signal-cmd: <optional but powerful — IDEMPOTENT command the gate will REPLAY v
   QUOTE any path containing spaces, and run it yourself once before declaring it>
 signal-attestable: <optional — non-replayable out-of-model proof (e.g. "capture read + run-stamp", "SQL query
   n>0 read"); in CRITICAL regime, satisfies the proof requirement when there is neither signal-cmd nor check:>
-gate: on                    <!-- on (default) | off — opt-out for a throwaway run: the Stop hook skips the ENTIRE gate if 'off' appears in the first 14 lines (cf. stop-gate.ps1) -->
+gate: on                    <!-- on (default) | off — opt-out for a throwaway run: the Stop hook skips the ENTIRE gate on a `gate: off` line (a trailing `<!-- comment -->` is OK) in the first 14 lines (cf. stop-gate.ps1) -->
 
 ## Besoin
 **Deep-why** : <the real problem, not the solution requested>
 **Scope IN** : <what is covered> / **Scope OUT** : <what is not, and why>
-**Critere de succes verifiable** : <how we will KNOW it is done>
+**Critere de succes (DoD cochable)** : les conditions de SORTIE, chacune verifiable + sa PREUVE — le judge la coche item par item ; une case a contenu reel NON cochee = item non tenu -> le **stop-gate BLOQUE le green** (deterministe, hors-modele) ; la PREUVE derriere une case cochee -> verifiee par **judge + humain** (le gate ne lit pas la substance). NE PAS recopier un signal/check : y POINTER. (disposable : une phrase suffit ; standard/critical : items, chacun avec une VRAIE preuve — pas de prose generique.)
+  - [ ] <condition de sortie 1> (preuve: <artefact / "cf. signal-cmd" / "cf. check:" / prose falsifiable>)
+  - [ ] <condition de sortie 2> (preuve: ...)
 **Decisions deliberees** : <deliberate choices the review should not re-flag>
 **Hypotheses annoncees** : <"I am assuming X (fact: ...) — correct me">
 
