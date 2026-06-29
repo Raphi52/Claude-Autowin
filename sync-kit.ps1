@@ -16,6 +16,7 @@ $enc = New-Object System.Text.UTF8Encoding($false)
 $files = @(
   'skills\scout\SKILL.md', 'skills\frame\SKILL.md', 'skills\terrain\SKILL.md', 'skills\judge\SKILL.md',
   'skills\build\SKILL.md', 'skills\kaizen\SKILL.md',
+  'skills\front-converge\SKILL.md', 'skills\front-converge\capture-window.ps1', 'skills\front-converge\design-glossary.html',
   'skills\_engine\ENGINE.md', 'skills\_engine\RUN-template.md',
   'hooks\anti-flaky.ps1', 'hooks\stop-gate.ps1', 'hooks\fix-gate.ps1', 'hooks\advisory-guard.ps1',
   'hooks\kaizen-detect.ps1', 'hooks\kaizen-nudge.ps1', 'hooks\kaizen-revert-log.ps1', 'hooks\test-hooks.ps1',
@@ -29,7 +30,7 @@ $changed = 0; $drift = 0
 foreach ($rel in $files) {
   $src = Join-Path $live $rel; $dst = Join-Path $pkg $rel
   if (-not (Test-Path $src)) { Write-Host "  ! source absente: $rel" -ForegroundColor Yellow; continue }
-  $content = [IO.File]::ReadAllText($src).Replace('C:\Code RIG\Audit\workspaces', 'Audit\workspaces').Replace($live, '%USERPROFILE%\.claude')
+  $content = [IO.File]::ReadAllText($src).Replace($live, '%USERPROFILE%\.claude')
   $old = if (Test-Path $dst) { [IO.File]::ReadAllText($dst) } else { '' }
   if ($content -ne $old) {
     $drift++
