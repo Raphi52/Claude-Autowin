@@ -87,6 +87,6 @@ Loop-execution mechanics — decompose into signal-bearing increments, red-first
 
 Workspace convention and `signal-cmd` whitelist: **ENGINE Ch.3** (RUN.md header `status/regime/signal/signal-cmd/gate`, single-writer, FLAKY, session-scoping + legacy fallback). Signal trustworthiness (proof classes, self-proving, auto-proves): **ENGINE Ch.2**.
 
-Workspace path (session-scoped): `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` — set the `session:` header. The installed Stop hook reads RUN.md and **blocks end-of-turn while a run is open/red** — that out-of-model gate is the real closure authority, not you.
+Workspace path (session-scoped): `~\.claude\runs\<session_id>\<subject>-workspace\RUN.md` — set the `session:` header. The installed Stop hook reads RUN.md and **blocks end-of-turn while a run is open/red** — that out-of-model gate is the real closure authority, not you.
 
 Reflex anchor: **the signal must reproduce the USER's symptom as they live it** — a proxy two causal steps away from the terminal effect is not a closure signal.

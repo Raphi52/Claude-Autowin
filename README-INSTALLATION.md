@@ -43,7 +43,7 @@ workstation. **Current version: see `VERSION` (this kit = 3.6.0).**
      frame/RUN/QCM/judge) on advisory/frustration prompts. Backs the new **Advisory hard-gate** (routing) +
      **reflexes 14-18** in `CONSTITUTION.md`.
    - **Stop-gate v3.2 — per-session scoping** (from 3.3.0): concurrent sessions no longer cross-block; skills
-     write RUN.md under `Audit\workspaces\<session_id>\<subject>-workspace\`.
+     write RUN.md under `~\.claude\runs\<session_id>\<subject>-workspace\` (user-global, out of the project tree).
 6. **Reload** — restart Claude Code (hooks + output-style load only at startup).
 7. **Verify** — same pipe-tests as Step 7 below + confirm `VERSION` now reads 3.6.0. (Or run the bundled
    harness: `powershell -NoProfile -File hooks\test-hooks.ps1` → exit 0 = all hooks still bite.)
@@ -81,10 +81,12 @@ workstation. **Current version: see `VERSION` (this kit = 3.6.0).**
 - APPEND the content of `CONSTITUTION.md` to the end of `%USERPROFILE%\.claude\CLAUDE.md` (create the file if
   missing; if a "Constitution — cardinal reflexes" section already exists, REPLACE it, don't duplicate).
 
-**Step 5 — Workspace root (portable — nothing to hardcode)**
-- The skills write their artifacts under `Audit\workspaces\<session_id>\<subject>-workspace\`, **relative to
-  the project root** (the `cwd` where you launch Claude) — exactly where the stop-gate hook looks.
-- Just launch Claude from your project root; the `Audit\workspaces\` folder is created there on first use.
+**Step 5 — Workspace root (user-global — NOTHING created in your repo)**
+- The skills write their RUN.md / workspaces under `%USERPROFILE%\.claude\runs\<session_id>\<subject>-workspace\`
+  (i.e. `~\.claude\runs\`) — **user-global, OUT of any project tree**. Your source folder stays clean; this is
+  the DEFAULT baked into the hooks, identical on every machine, **no per-machine setup**.
+- Optional override: set env `AUTOWIN_RUN_ROOT` to relocate that root. A legacy per-project
+  `<cwd>\Audit\workspaces\` is still honored during transition (so in-flight runs aren't lost).
 
 **Step 6 — Reload**
 - Tell the user: **open `/hooks` in Claude Code (or restart)** — hooks only load at startup.

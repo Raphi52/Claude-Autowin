@@ -29,7 +29,7 @@ question touched, the board-gate auto-answers the evident and surfaces to the hu
 ## Procedure
 
 ### 0. RUN file
-Open or complete the **one** living `RUN.md`: `Audit\workspaces\<session_id>\<subject>-workspace\RUN.md` (kebab-case slug; `session:` header; session-scoping + legacy fallback → **ENGINE Ch.3 (RUN details) + foundation §1**). Set `regime:` (disposable | standard | critical) on entry. A `disposable` one-shot may need no RUN file (proportionality). Write `## Besoin` and (if reached) `## Options` here — never in separate files.
+Open or complete the **one** living `RUN.md`: `~\.claude\runs\<session_id>\<subject>-workspace\RUN.md` (kebab-case slug; `session:` header; session-scoping + legacy fallback → **ENGINE Ch.3 (RUN details) + foundation §1**). Set `regime:` (disposable | standard | critical) on entry. A `disposable` one-shot may need no RUN file (proportionality). Write `## Besoin` and (if reached) `## Options` here — never in separate files.
 
 ### Pass A — the need (always)
 

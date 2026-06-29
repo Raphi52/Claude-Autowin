@@ -1,4 +1,4 @@
-<!-- RUN-template.md — copy this file to Audit\workspaces\<session_id>\<sujet>-workspace\RUN.md
+<!-- RUN-template.md — copy this file to ~\.claude\runs\<session_id>\<sujet>-workspace\RUN.md
      (<session_id> = injected each turn by the UserPromptSubmit hook; ONE folder per session; Stop-gate
      v3.2 enforces ONLY the runs of its own session). Fallback: flat path if no session_id.
      Full convention: _engine/ENGINE.md ch.3.

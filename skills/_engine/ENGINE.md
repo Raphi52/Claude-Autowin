@@ -14,7 +14,7 @@ concepts, the skills, the reflexes — is HOW.
 
 ## ⚡ THE FOUNDATION — the only 7 things to keep in mind (day-1; everything else is CONSULTED)
 
-1. **One task = ONE file**: `RUN.md` in its **session-scoped** workspace (`Audit\workspaces\<session_id>\<subject>-workspace\` — the `session_id` is injected every turn by the UserPromptSubmit hook; Stop-gate v3.2 enforces ONLY the runs of its own session → no more cross-blocking between concurrent sessions).
+1. **One task = ONE file**: `RUN.md` in its **session-scoped** workspace (`~\.claude\runs\<session_id>\<subject>-workspace\` — the `session_id` is injected every turn by the UserPromptSubmit hook; Stop-gate v3.2 enforces ONLY the runs of its own session → no more cross-blocking between concurrent sessions).
    Header: `status: open|green|red|degraded-closed` · `regime:` · `signal:` · `signal-cmd:` (optional, REPLAYABLE) · `signal-attestable:` (optional — non-replayable out-of-model proof, e.g. capture read + run-stamp; in CRITICAL, satisfies the proof requirement when there is neither `signal-cmd` nor `check:`) · `session:` (scope; otherwise the `<session_id>\` location is authoritative) · `gate: off` (justified opt-out).
    ⚠️ `signal-cmd` is executed via `cmd /c` EXACTLY as written — it is an artifact too: **quote every
    path containing spaces**, and never declare a command you have not run yourself at least once.

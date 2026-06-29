@@ -39,11 +39,13 @@ if ($null -eq $j -or ($j -isnot [System.Management.Automation.PSCustomObject])) 
 if ($j.stop_hook_active) { exit 0 }
 
 $cwd = [string]$j.cwd
-if (-not $cwd -or -not (Test-Path $cwd)) { exit 0 }
+# DON'T exit on bad/absent cwd: with the GLOBAL run root, RUN.md lives OUTSIDE the project tree and must still
+# be enforced even if cwd is gone. cwd-dependent legs (replay anchor, legacy per-project root) are guarded below.
+$cwdValid = ($cwd -and (Test-Path $cwd))
 # Anchor replays/checks on the session cwd (kaizen 2026-06-23, gate-counters stop x2): Invoke-GateCmd otherwise
 # inherits an UNDEFINED cwd, so a RELATIVE check:/signal-cmd (e.g. `node tools/smoke.mjs`) was a latent false-BLOCK.
 # $cwd is already Test-Path-validated above. (Cross-project RUN-vs-target stays a convention matter: absolute paths.)
-$script:gateCwd = $cwd
+if ($cwdValid) { $script:gateCwd = $cwd }
 
 $replayWhitelist = @('dotnet test', 'dotnet build', 'cmd /c', 'powershell -NoProfile -File', 'powershell -File', 'pwsh -NoProfile -File', 'pwsh -File')
 
@@ -88,18 +90,25 @@ function Test-MeaningfulProof([string]$c) {
 # (its runs are "mine" by placement); cwd + Audit\workspaces top-level remain scanned but are
 # filtered by ownership in the loop (header session: == my id). Legacy fallback if session_id absent.
 $sid = [string]$j.session_id
-# Workspaces root(s). Default = cwd\Audit\workspaces (portable, per-project). A machine MAY relocate
-# RUN.md/workspaces OUT of the project tree via env AUTOWIN_RUN_ROOT (e.g. ~\.claude\rig-audit\workspaces).
-# ADDITIVE: every configured root is scanned, so no run is missed during/after migration.
-$centrals = @((Join-Path $cwd 'Audit\workspaces'))
-if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $centrals += $env:AUTOWIN_RUN_ROOT.Trim() }
+# RUN root: DEFAULT = <userprofile>\.claude\runs (user-global, OUT of any project tree — universal, same on
+# every machine, no per-machine setup). Override via env AUTOWIN_RUN_ROOT.
+$runRoot = if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $env:AUTOWIN_RUN_ROOT.Trim() } else { Join-Path $env:USERPROFILE '.claude\runs' }
+$roots = @()
 $mySessionRoots = @()
-$roots = @($cwd)
-foreach ($c in $centrals) {
-    if (Test-Path $c) { $roots += $c }
-    # $sr added as an ownership anchor ONLY if it really exists — a non-existent computed path must never
-    # become a -like prefix that could spuriously match a real workspace dir (guards the ownership boundary).
-    if ($sid) { $sr = Join-Path $c $sid; if (Test-Path $sr) { $roots += $sr; $mySessionRoots += $sr } }
+# The GLOBAL run root is SHARED by all of this user's sessions -> scan ONLY my session subtree <root>\<sid>\.
+# NEVER flat-scan the shared root top-level: a flat *-workspace there could be a FOREIGN/planted run (another
+# session writes to the same shared root); seeing/replaying it = cross-session forgery (Guardian 2026-06-29).
+# Path-placement under <sid> is the ownership anchor; a 'session:' header alone never grants replay (see below).
+if ($sid) { $sr = Join-Path $runRoot $sid; if (Test-Path $sr) { $roots += $sr; $mySessionRoots += $sr } }
+# PER-PROJECT legacy (old model): $cwd itself + $cwd\Audit\workspaces (+ its <sid> subtree). Project-local,
+# no cross-session co-mingling -> safe to flat-scan. Only if cwd is valid (else the global subtree above suffices).
+if ($cwdValid) {
+    $roots += $cwd
+    $legacy = Join-Path $cwd 'Audit\workspaces'
+    if (Test-Path $legacy) {
+        $roots += $legacy
+        if ($sid) { $srL = Join-Path $legacy $sid; if (Test-Path $srL) { $roots += $srL; $mySessionRoots += $srL } }
+    }
 }
 $wsDirs = @()
 foreach ($r in $roots) {
@@ -120,21 +129,23 @@ foreach ($d in $wsDirs) {
     # Enforce ONLY runs of THIS session: mine if under Audit\workspaces\<my id>\ OR header
     # "session: <my id>". Otherwise (other session / legacy unstamped) => IGNORE. Fallback: no session_id => legacy.
     $owned = $false
+    $underMySession = $false   # PATH-placement ownership: $d is under <root>\<sid>\ — unforgeable by header alone
     if ($sid) {
-        $underMySession = $false
         foreach ($msr in $mySessionRoots) { if ($d.FullName -like ($msr + '\*')) { $underMySession = $true; break } }
         $sessLine = $head | Where-Object { $_ -match '^\s*session:\s*\S' } | Select-Object -First 1
         $runSession = if ($sessLine) { ($sessLine -replace '^\s*session:\s*', '').Trim() } else { '' }
+        # BLOCK-ownership tolerates a 'session:' header match (a header-tagged open run still blocks YOU, harmless);
+        # REPLAY does NOT (see $mayReplay) -> a forged header can never trigger command execution.
         $owned = ($underMySession -or ($runSession -and $runSession -eq $sid))
         if (-not $owned) { continue }
     }
-    # SECURITY: replay (signal-cmd/check execution) ONLY for runs of THIS session (owned). In legacy (no sid)
-    # => owned=false => NO replay: a cloned/foreign RUN.md no longer executes commands on the victim machine.
-    # Single trusted host opt-in: env AUTOWIN_TRUST_REPLAY=1.
-    # SCOPING (v3.2): with a session_id, a NON-owned run (another session) is IGNORED entirely (continue above)
-    # — the block applies only WITHIN this session, by design (no cross-session blocking). Only LEGACY mode
-    # (no session_id) enforces every run found. Replay stays gated on $owned regardless.
-    $mayReplay = ($owned -or ($env:AUTOWIN_TRUST_REPLAY -eq '1'))
+    # SECURITY (hardened 2026-06-29): replay (signal-cmd/check EXECUTION) requires PATH-PLACEMENT under
+    # <root>\<sid>\ ($underMySession) — NOT a 'session:' header match. The global run root is SHARED across this
+    # user's sessions, so a concurrent/compromised session could plant a flat run with a FORGED 'session: <my id>'
+    # header + a malicious signal-cmd; gating replay on placement (which a planted/foreign run lacks) closes that
+    # cross-session command-execution forgery. A forged-header run may still BLOCK (harmless), never EXECUTES.
+    # Legacy no-sid => $underMySession=false => no replay. Trusted single-host opt-in: env AUTOWIN_TRUST_REPLAY=1.
+    $mayReplay = ($underMySession -or ($env:AUTOWIN_TRUST_REPLAY -eq '1'))
     $statusLine = $head | Where-Object { $_ -match '^\s*status:' } | Select-Object -First 1
     if (-not $statusLine) { continue }
     $status = ($statusLine -replace '^\s*status:\s*', '').Trim().ToLower()

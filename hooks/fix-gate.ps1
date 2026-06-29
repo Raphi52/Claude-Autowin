@@ -40,18 +40,14 @@ $base = [System.IO.Path]::GetFileName($fp)
 # Include the session folder derived from $j.cwd (provided by the harness),
 # so both gates read the SAME session folder when cwd != $PWD.
 $cwd = [string]$j.cwd
-$roots = @()
+# RUN root: DEFAULT <userprofile>\.claude\runs (user-global, ALWAYS resolvable without cwd — this replaces the
+# old hardcoded project-path fallback that covered the cwd-absent case). Override AUTOWIN_RUN_ROOT.
+# + LEGACY per-project roots ($cwd / $PWD \Audit\workspaces) scanned too, guarded by Test-Path (transition-safe).
+$runRoot = if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $env:AUTOWIN_RUN_ROOT.Trim() } else { Join-Path $env:USERPROFILE '.claude\runs' }
+$roots = @((Join-Path $runRoot $sid))
 if ($cwd -and (Test-Path $cwd)) { $roots += (Join-Path $cwd "Audit\workspaces\$sid") }
-# Optional relocated RUN root (machine-local, e.g. ~\.claude\rig-audit\workspaces). ADDITIVE.
-if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $roots += (Join-Path $env:AUTOWIN_RUN_ROOT.Trim() $sid) }
 $roots += (Join-Path $PWD "Audit\workspaces\$sid")
-# The project root 'C:\Code RIG\...' had been REMOVED for portability, but it was LOAD-BEARING:
-# PreToolUse stdin does not always provide $cwd (unlike the Stop hook) -> without this root the
-# discipline found NO RUN and blocked at >=6 with no possible disarm (observed this session).
-# It is GUARDED by Test-Path below -> non-existent elsewhere = skipped, ZERO distribution impact.
-# Real portability = harness provides cwd; until then, keep this fallback.
-$roots += "Audit\workspaces\$sid"
-# Dedupe (preserves order: cwd > $PWD > project)
+# Dedupe (preserves order: runRoot > cwd > $PWD)
 $roots = $roots | Select-Object -Unique
 $disciplined = $false
 $greenForFile = $false
