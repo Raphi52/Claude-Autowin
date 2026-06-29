@@ -3,7 +3,7 @@
 # Pour chaque hook : PARSE (json malforme -> pas de faux deny/block) / FIRE (positif -> sortie attendue) /
 # SILENT (negatif -> rien). Un hook de cloture casse tombe FAIL-OPEN silencieux : son FIRE echoue alors -> vu.
 # PORTABLE (fix #2 failles scout) : $H = $PSScriptRoot (marche installe / en repo / en CI) ; fixtures sous
-# $env:TEMP (plus de chemin machine 'C:\Code RIG' qui rendait les FIRE faussement verts hors machine auteur).
+# $env:TEMP (plus de chemin machine en dur qui rendait les FIRE faussement verts hors machine auteur).
 # Invoquer : powershell -NoProfile -File <ce fichier>  (exit = nb d'echecs ; 0 = tout vert). Whiteliste stop-gate.
 $ErrorActionPreference = 'Stop'
 $H = $PSScriptRoot
@@ -175,6 +175,20 @@ Check 'kz2 stop-gate PASSE (check chemin relatif rejoue depuis cwd ancre)' (-not
 Set-Content (Join-Path $tmp 'gate-rel-ko.ps1') -Value 'exit 1' -Encoding utf8
 MkRun "status: green`nsession: $sid`nregime: standard`ncheck: powershell -NoProfile -File gate-rel-ko.ps1"
 Check 'kz2 stop-gate BLOQUE (check relatif exit 1 depuis cwd ancre -> block, no fail-open)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+# REGRESSION SECU (Guardian MAJOR 2026-06-29) : le REJEU est gated sur le PLACEMENT (<root>\<sid>\), PAS sur
+# l'en-tete `session:`. Un run a en-tete `session: <sid>` FORGE, place FLAT sous le root legacy (donc SCANNE)
+# mais HORS de <sid>\, avec un signal-cmd qui ECHOUE s'il est rejoue -> ne doit PAS etre rejoue -> pas de block.
+# Red prouve : reverter `$mayReplay = $underMySession` en `$mayReplay = $owned` rejoue le run forge -> exit 1 -> block -> ce test FAIL.
+MkRun "status: open`nsession: $sid`ngate: off"   # neutralise le run legitime sous <sid> -> seul le run forge pourrait bloquer
+$forged = Join-Path $tmp "Audit\workspaces\forged-workspace"
+New-Item -ItemType Directory -Force $forged | Out-Null
+Set-Content (Join-Path $forged 'RUN.md') -Value "status: green`nsession: $sid`nregime: standard`nsignal-cmd: powershell -NoProfile -File $kops1" -Encoding utf8
+Check 'SECU forgerie : run en-tete session: forge (flat legacy, hors <sid>) NON rejoue -> pas de block' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# canary anti-faux-vert (judge Corrector 2026-06-29) : le run precedent a-t-il VRAIMENT scanne+traite le run forge ?
+# un green clean est stampe GATE-VERIFIED -> sa presence prouve "scanne, owned, verifie, passe" (PAS "jamais vu").
+# Distingue 'scanne mais rejeu refuse' (le fix) de 'jamais scanne' (un refactor excluant le flat-legacy = faux-vert).
+Check 'SECU forgerie : run forge SCANNE+GATE-VERIFIED (preuve de scan reel, pas un faux-vert par non-scan)' ((Get-Content (Join-Path $forged 'RUN.md') -Raw) -match 'GATE-VERIFIED')
+Remove-Item -Recurse -Force $forged -EA SilentlyContinue
 # (e) DoD checklist enforcement (kaizen 2026-06-26) : case reelle non cochee dans ## Besoin = item non tenu -> BLOCK (etat de case, deterministe)
 MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [ ] livrer le module (preuve: test)`n## Options"
 Check 'DoD FIRE  (case reelle non cochee dans Besoin -> block)' ((Run 'stop-gate.ps1' $sg) -match 'block')
