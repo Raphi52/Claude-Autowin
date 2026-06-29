@@ -42,6 +42,8 @@ $base = [System.IO.Path]::GetFileName($fp)
 $cwd = [string]$j.cwd
 $roots = @()
 if ($cwd -and (Test-Path $cwd)) { $roots += (Join-Path $cwd "Audit\workspaces\$sid") }
+# Optional relocated RUN root (machine-local, e.g. ~\.claude\rig-audit\workspaces). ADDITIVE.
+if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $roots += (Join-Path $env:AUTOWIN_RUN_ROOT.Trim() $sid) }
 $roots += (Join-Path $PWD "Audit\workspaces\$sid")
 # The project root 'C:\Code RIG\...' had been REMOVED for portability, but it was LOAD-BEARING:
 # PreToolUse stdin does not always provide $cwd (unlike the Stop hook) -> without this root the

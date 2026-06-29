@@ -88,10 +88,19 @@ function Test-MeaningfulProof([string]$c) {
 # (its runs are "mine" by placement); cwd + Audit\workspaces top-level remain scanned but are
 # filtered by ownership in the loop (header session: == my id). Legacy fallback if session_id absent.
 $sid = [string]$j.session_id
-$central = Join-Path $cwd 'Audit\workspaces'
+# Workspaces root(s). Default = cwd\Audit\workspaces (portable, per-project). A machine MAY relocate
+# RUN.md/workspaces OUT of the project tree via env AUTOWIN_RUN_ROOT (e.g. ~\.claude\rig-audit\workspaces).
+# ADDITIVE: every configured root is scanned, so no run is missed during/after migration.
+$centrals = @((Join-Path $cwd 'Audit\workspaces'))
+if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $centrals += $env:AUTOWIN_RUN_ROOT.Trim() }
+$mySessionRoots = @()
 $roots = @($cwd)
-if (Test-Path $central) { $roots += $central }
-if ($sid) { $sessionRoot = Join-Path $central $sid; if (Test-Path $sessionRoot) { $roots += $sessionRoot } }
+foreach ($c in $centrals) {
+    if (Test-Path $c) { $roots += $c }
+    # $sr added as an ownership anchor ONLY if it really exists — a non-existent computed path must never
+    # become a -like prefix that could spuriously match a real workspace dir (guards the ownership boundary).
+    if ($sid) { $sr = Join-Path $c $sid; if (Test-Path $sr) { $roots += $sr; $mySessionRoots += $sr } }
+}
 $wsDirs = @()
 foreach ($r in $roots) {
     $wsDirs += Get-ChildItem -Path $r -Directory -Filter '*-workspace' -ErrorAction SilentlyContinue
@@ -112,7 +121,8 @@ foreach ($d in $wsDirs) {
     # "session: <my id>". Otherwise (other session / legacy unstamped) => IGNORE. Fallback: no session_id => legacy.
     $owned = $false
     if ($sid) {
-        $underMySession = ($d.FullName -like ('*\Audit\workspaces\' + $sid + '\*'))
+        $underMySession = $false
+        foreach ($msr in $mySessionRoots) { if ($d.FullName -like ($msr + '\*')) { $underMySession = $true; break } }
         $sessLine = $head | Where-Object { $_ -match '^\s*session:\s*\S' } | Select-Object -First 1
         $runSession = if ($sessLine) { ($sessLine -replace '^\s*session:\s*', '').Trim() } else { '' }
         $owned = ($underMySession -or ($runSession -and $runSession -eq $sid))
@@ -121,7 +131,9 @@ foreach ($d in $wsDirs) {
     # SECURITY: replay (signal-cmd/check execution) ONLY for runs of THIS session (owned). In legacy (no sid)
     # => owned=false => NO replay: a cloned/foreign RUN.md no longer executes commands on the victim machine.
     # Single trusted host opt-in: env AUTOWIN_TRUST_REPLAY=1.
-    # (The open/red block remains active even when not owned: closure security is not disarmed, only replay is.)
+    # SCOPING (v3.2): with a session_id, a NON-owned run (another session) is IGNORED entirely (continue above)
+    # — the block applies only WITHIN this session, by design (no cross-session blocking). Only LEGACY mode
+    # (no session_id) enforces every run found. Replay stays gated on $owned regardless.
     $mayReplay = ($owned -or ($env:AUTOWIN_TRUST_REPLAY -eq '1'))
     $statusLine = $head | Where-Object { $_ -match '^\s*status:' } | Select-Object -First 1
     if (-not $statusLine) { continue }
