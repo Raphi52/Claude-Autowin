@@ -8,7 +8,7 @@ session: <session_id>       <!-- scopes the run to this session (otherwise the <
 regime: standard            <!-- disposable | standard | critical — the effort dial -->
 signal: <the OUT-OF-MODEL artifact that will prove green — e.g. "test-x.ps1 exit 0", "capture read", "SQL query n>0">
 signal-cmd: <optional but powerful — IDEMPOTENT command the gate will REPLAY via cmd /c; whitelisted prefixes:
-  dotnet test | dotnet build | cmd /c | powershell -NoProfile -File | powershell -File —
+  dotnet test | dotnet build | cmd /c | powershell [-NoProfile] -File | pwsh [-NoProfile] -File —
   QUOTE any path containing spaces, and run it yourself once before declaring it>
 signal-attestable: <optional — non-replayable out-of-model proof (e.g. "capture read + run-stamp", "SQL query
   n>0 read"); in CRITICAL regime, satisfies the proof requirement when there is neither signal-cmd nor check:>

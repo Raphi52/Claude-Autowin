@@ -199,6 +199,9 @@ MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [x] livrer l
 Check 'DoD SILENT(tout coche [x] -> pass)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [ ] <condition de sortie 1> (preuve: ...)`n## Options"
 Check 'DoD SILENT(placeholder <...> non coche -> ignore, pas de false-block)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
+# judge Guardian re-check 2026-06-30 : une case VIDE/100%-espaces n'est PLUS ignoree (seul le <placeholder> l'est) -> BLOQUE (red sans le |$)
+MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`n- [ ]`n## Options"
+Check 'DoD FIRE  (case VIDE non cochee dans Besoin -> block, pas un placeholder)' ((Run 'stop-gate.ps1' $sg) -match 'block')
 MkRun "status: green`nsession: $sid`nregime: standard`n## Besoin`nCritere de succes: prose sans case`n## Options"
 Check 'DoD SILENT(legacy prose 0 case -> pass)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 MkRun "status: green`nsession: $sid`nregime: disposable`n## Besoin`n- [ ] item reel non coche`n## Options"

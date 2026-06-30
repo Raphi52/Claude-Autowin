@@ -255,7 +255,7 @@ foreach ($d in $wsDirs) {
             # condition blocks even if nested). Closing on `###` would let a model EVADE the DoD block by nesting
             # its real boxes under a `###` (judge Guardian 2026-06-30). Non-DoD lists use prose/`-`, not `- [ ]`.
             if ($inBesoin -and $ln -match '^\s*##\s') { $inBesoin = $false }
-            if ($inBesoin -and $ln -match '^\s*[-*+]\s*\[\s*\]\s*[^<\s]') {
+            if ($inBesoin -and $ln -match '^\s*[-*+]\s*\[\s*\]\s*(?:[^<\s]|$)') {   # |$ -> an EMPTY/whitespace-only box also blocks (only a `<placeholder>` is skipped) — judge Guardian re-check 2026-06-30
                 $failures += ('DoD item NON TENU (case non cochee) dans ## Besoin: ' + $ln.Trim())
             }
         }
