@@ -25,6 +25,9 @@ New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $origUP = $env:USERPROFILE
 $sandboxHome = Join-Path $tmp 'home'; New-Item -ItemType Directory -Force (Join-Path $sandboxHome '.claude\hooks') | Out-Null
 $env:USERPROFILE = $sandboxHome
+# HERMETICITE (kit-coherence N2) : neutralise un AUTOWIN_RUN_ROOT machine-local eventuel (override de chemin)
+# -> les tests exercent la resolution PAR DEFAUT (USERPROFILE\.claude\runs), pas l'env du poste. Restaure a la fin.
+$origRunRoot = $env:AUTOWIN_RUN_ROOT; $env:AUTOWIN_RUN_ROOT = ''
 
 # --- fix-gate : FIRE (6e edit non discipline) / SILENT (.md) / PARSE / #7 prose-vs-token ---
 $st = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-fixgate-$sid.json")
@@ -332,7 +335,47 @@ $env:AUTOWIN_GIT_AUTH = '1'
 Check 'git-auth ALLOW (env AUTOWIN_GIT_AUTH=1 -> standing grant)' (-not ((Run 'git-auth-gate.ps1' (J @{ session_id = $sid; tool_input = @{ command = 'git push origin main' } })) -match 'permissionDecision'))
 $env:AUTOWIN_GIT_AUTH = $prevGitAuth; Remove-Item $gaFlag -EA SilentlyContinue
 
+# === kit-coherence build (N1-N4, 2026-06-30) : couverture du chemin PRIMAIRE runRoot + edge-cases de scan ===
+# Etat propre des workspaces de session (les tests ci-dessus ont laisse des RUN sous le legacy).
+Remove-Item -Recurse -Force (Join-Path $tmp "Audit\workspaces\$sid") -EA SilentlyContinue
+$primRoot = Join-Path $sandboxHome ".claude\runs\$sid"
+Remove-Item -Recurse -Force $primRoot -EA SilentlyContinue
+# -- N2 : le chemin PRIMAIRE $runRoot\<sid> (= ~/.claude/runs\<sid>, defaut universel) etait 100% non teste (que le legacy) --
+$primSg = Join-Path $primRoot 'prim-sg-workspace'; New-Item -ItemType Directory -Force $primSg | Out-Null
+Set-Content (Join-Path $primSg 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
+Check 'N2 stop-gate FIRE  (open RUN sous chemin PRIMAIRE runRoot)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+Remove-Item -Recurse -Force $primSg -EA SilentlyContinue
+$primPc = Join-Path $primRoot 'prim-pc-workspace'; New-Item -ItemType Directory -Force $primPc | Out-Null
+Set-Content (Join-Path $primPc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
+Check 'N2 precompact FIRE (open RUN sous chemin PRIMAIRE runRoot)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
+Remove-Item -Recurse -Force $primPc -EA SilentlyContinue
+$primFx = Join-Path $primRoot 'prim-fx-workspace'; New-Item -ItemType Directory -Force $primFx | Out-Null
+Set-Content (Join-Path $primFx 'RUN.md') "status: open`nsession: $sid`nCausalHypothesis: cause Y sur prim.ps1 (src)" -Encoding utf8
+$stP = Join-Path ([System.IO.Path]::GetTempPath()) ("claude-fixgate-$sid.json"); @{ 'c:\tmp\prim.ps1' = 6 } | ConvertTo-Json -Compress | Set-Content $stP -Encoding utf8
+Check 'N2 fix-gate SILENT (RUN discipline sous chemin PRIMAIRE runRoot desarme le gate)' (-not ((Run 'fix-gate.ps1' (J @{ session_id = $sid; cwd = 'C:\tmp\nope'; tool_input = @{ file_path = 'C:\tmp\prim.ps1'; new_string = 'code' } })) -match 'deny'))
+Remove-Item -Recurse -Force $primFx -EA SilentlyContinue; Remove-Item $stP -EA SilentlyContinue
+# N2b : l'OVERRIDE AUTOWIN_RUN_ROOT est honore (chemin custom scanne au lieu du defaut)
+$ovRoot = Join-Path $tmp 'custom-runroot'; $env:AUTOWIN_RUN_ROOT = $ovRoot
+$ovWs = Join-Path $ovRoot "$sid\ov-workspace"; New-Item -ItemType Directory -Force $ovWs | Out-Null
+Set-Content (Join-Path $ovWs 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
+Check 'N2 stop-gate FIRE  (open RUN sous AUTOWIN_RUN_ROOT override honore)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+$env:AUTOWIN_RUN_ROOT = ''; Remove-Item -Recurse -Force $ovRoot -EA SilentlyContinue
+# -- N3 : un sous-titre ### FERME le scope DoD ; precompact lit 14 lignes (aligne sur stop-gate) --
+$n3d = Join-Path $tmp "Audit\workspaces\$sid\n3-workspace"; New-Item -ItemType Directory -Force $n3d | Out-Null
+# FAIL-CLOSED (judge Guardian 2026-06-30) : une case REELLE non cochee sous un `### sous-titre` dans ## Besoin
+# reste scannee comme DoD -> BLOQUE. Le scope ne ferme QUE sur un `## ` de niveau 2, jamais sur `###` : sinon un
+# modele evaderait le block DoD en nichant ses vraies cases sous un ###. (red si on re-ferme sur ### -> passerait.)
+Set-Content (Join-Path $n3d 'RUN.md') "status: green`nsession: $sid`nregime: standard`n## Besoin`n### Sous-section`n- [ ] vraie condition de sortie non tenue (preuve: test)`n## Options" -Encoding utf8
+Check 'N3 stop-gate FIRE  (case reelle non cochee sous ### dans Besoin -> BLOQUE, anti-bypass DoD)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+Remove-Item -Recurse -Force $n3d -EA SilentlyContinue
+Remove-Item -Recurse -Force (Join-Path $tmp "Audit\workspaces\$sid") -EA SilentlyContinue
+$pc2 = Join-Path $tmp "Audit\workspaces\$sid\pc2-workspace"; New-Item -ItemType Directory -Force $pc2 | Out-Null
+Set-Content (Join-Path $pc2 'RUN.md') "<!-- preambule l1 -->`n<!-- l2 -->`n<!-- l3 -->`n<!-- l4 -->`nstatus: open`nsession: $sid" -Encoding utf8
+Check 'N3 precompact FIRE (status: en ligne 5 vu via fenetre 14 lignes, pas 3)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
+Remove-Item -Recurse -Force $pc2 -EA SilentlyContinue
+
 $env:USERPROFILE = $origUP
+$env:AUTOWIN_RUN_ROOT = $origRunRoot
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
 
 "--- $script:fails echec(s) ---"

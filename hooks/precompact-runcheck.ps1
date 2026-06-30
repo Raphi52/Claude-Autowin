@@ -15,7 +15,9 @@ if (Test-Path $legacy) { $dirs += $(if ($sid) { Join-Path $legacy $sid } else { 
 $open = @()
 foreach ($d in $dirs) {
     if (Test-Path $d) {
-        $open += @(Get-ChildItem $d -Filter RUN.md -Recurse -ErrorAction SilentlyContinue | Where-Object { (Get-Content $_.FullName -TotalCount 3) -match 'status:\s*open' })
+        # Scan the first 14 lines (aligned with stop-gate's header window) — a `status:` pushed past line 3 by a
+        # preamble/comment was previously MISSED here while stop-gate still blocked it (kit-coherence N3).
+        $open += @(Get-ChildItem $d -Filter RUN.md -Recurse -ErrorAction SilentlyContinue | Where-Object { (Get-Content $_.FullName -TotalCount 14) -match 'status:\s*open' })
     }
 }
 $open = @($open | Sort-Object FullName -Unique)

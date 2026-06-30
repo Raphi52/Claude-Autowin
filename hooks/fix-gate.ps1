@@ -46,8 +46,12 @@ $cwd = [string]$j.cwd
 $runRoot = if ($env:AUTOWIN_RUN_ROOT -and $env:AUTOWIN_RUN_ROOT.Trim()) { $env:AUTOWIN_RUN_ROOT.Trim() } else { Join-Path $env:USERPROFILE '.claude\runs' }
 $roots = @((Join-Path $runRoot $sid))
 if ($cwd -and (Test-Path $cwd)) { $roots += (Join-Path $cwd "Audit\workspaces\$sid") }
-$roots += (Join-Path $PWD "Audit\workspaces\$sid")
-# Dedupe (preserves order: runRoot > cwd > $PWD)
+# $PWD only as a GUARDED fallback WHEN $cwd is absent/invalid (kit-coherence N1-B4 + judge Corrector 2026-06-30):
+# the bare unconditional $PWD root risked a case-only duplicate scan on Windows, but removing it ENTIRELY lost
+# legacy coverage when the harness omits cwd -> guard it on (cwd missing) AND Test-Path, restoring the original
+# intent without the dup risk (when cwd IS valid, $PWD is NOT added -> no Windows case-dup).
+elseif ($PWD -and (Test-Path ([string]$PWD))) { $roots += (Join-Path ([string]$PWD) "Audit\workspaces\$sid") }
+# Dedupe (preserves order: runRoot > cwd|pwd)
 $roots = $roots | Select-Object -Unique
 $disciplined = $false
 $greenForFile = $false
@@ -114,7 +118,8 @@ else { $count = [int]$state[$key] + 1 }
 # instead of resetting on EVERY edit (which would permanently disarm the gate for that file).
 if ($greenSig -and ($greenSig -ne [string]$state[$sigKey])) { $count = 1; $state[$sigKey] = $greenSig }
 $state[$key] = $count
-try { ($state | ConvertTo-Json -Compress) | Set-Content -Path $stateFile -Encoding utf8 } catch { }
+try { ($state | ConvertTo-Json -Compress) | Set-Content -Path $stateFile -Encoding utf8 }
+catch { [Console]::Error.WriteLine('fix-gate: state-file write FAILED (' + $stateFile + ') -- counter not persisted, gate may under-count (NOT silent): ' + $_.Exception.Message) }
 
 $THRESHOLD = 6   # recalibrated 4->6; see header comment
 if ($disciplined -or $count -lt $THRESHOLD) { exit 0 }

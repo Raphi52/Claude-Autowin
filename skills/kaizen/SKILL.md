@@ -17,7 +17,7 @@ description: >-
   proven: producer=judge is not proof). On EXPLICIT human OK only: (5) INTEGRATE the approved diffs, preferring
   a WIRED trigger (hook + CLAUDE.md hard rule) over a passive memory fiche (loading ≠ applying — a fiche alone
   was violated twice the same session), VERIFY each edited hook with an out-of-model signal (parse + behavior +
-  negative control), then run `~/Desktop/Autowin/sync-kit.ps1` (live→package) and log the treated signature to
+  negative control), then run your local Autowin clone's `sync-kit.ps1` (live→package) and log the treated signature to
   `kaizen-treated.jsonl`. Mechanics are CANONICAL in `_engine/ENGINE.md` + `judge` Mode B; kaizen carries only
   the delta: target-location, the integrate-on-approval step, sync-kit, and the never-auto-write constraint.
   Trigger on "kaizen this session", "improve the kit from my recurring failures", "audit
@@ -41,10 +41,16 @@ auto-writes its own rules (closure authority is the human; a self-editing audit 
    - **a named behavior / habit / skill-set** — pass straight to Mode B's behavioral lenses.
    - **a recurrent telemetry pattern** — the `kaizen-nudge` Stop hook fired on `gate-counters.jsonl` (anti-flaky / fix-gate / revert recurring ≥ threshold). The pattern IS the target; audit whether it's a real habit or inflated noise (the detector itself can be the defect).
 2. **AUDIT — reuse `judge` Mode B (do NOT reimplement).** Run judge Mode B on the target: preload "already covered" (global `CLAUDE.md` + memory index + installed skills) so lenses don't re-flag the known; fan out 6-9 behavioral lenses IN PARALLEL (one message), model-diverse to decorrelate; each returns 1-2 NEW blind spots, each with a **falsifiable anchor** (exact quote + line) + severity + a proposed rule + an integration point. Loop with NEW lenses until 2 dry rounds (cap 3).
-3. **CONSOLIDATE.** Dedup across lenses; surface the ONE root cause (what a single specialist would miss) + a ranked table: `blind spot · anchor · severity · proposed rule · integration point (hook / CLAUDE.md hard-rule / memory / just-known)`. **Adjudicate** the lenses — reject a finding that re-flags a deliberate decision or overstates (you verify the real artifact, never a lens's word). State honest caveats (same-AI correlation; no planted-defect canary run).
+3. **CONSOLIDATE.** Dedup across lenses; surface the ONE root cause (what a single specialist would miss) + a ranked table: `blind spot · anchor · severity · proposed rule · integration point (hook / CLAUDE.md hard-rule / memory / just-known) · scope (global+mirror / local-only / project)`. **Adjudicate** the lenses — reject a finding that re-flags a deliberate decision or overstates (you verify the real artifact, never a lens's word). State honest caveats (same-AI correlation; no planted-defect canary run).
 4. **PROPOSE — never impose, NEVER auto-write** (CARDINAL — closure authority is the human). Present the table in PLAIN words. **Ship nothing to CLAUDE.md / CONSTITUTION / a skill / a hook / memory without explicit human OK.** The model NEVER auto-rewrites its own rules; a self-audit that auto-edits its own rules would cause serious damage. A producer=judge "100" is not proof; an auto-write loop would cause serious damage on a mis-read (lived: "intrinsic" concluded wrongly 3× — a human gate caught it). Kaizen detects + proposes; a human approves; only then is anything written.
-5. **INTEGRATE — edit the kit to change FUTURE behavior (only on explicit human OK).** The deliverable IS the edit. Each approved blind spot maps to a concrete edit in one of the kit files — pick the target by the kind of fix (the **target-map**):
-   - **a triggered reflex / hard rule** → `CLAUDE.md` (+ mirror `CONSTITUTION.md`) — the reflexes loaded every session.
+5. **INTEGRATE — edit the kit to change FUTURE behavior (only on explicit human OK).** The deliverable IS the edit. Before picking a file, run an explicit **placement analysis** per finding — REASON it, don't look it up, and surface the "why here" in the PROPOSE table. Three axes: **SCOPE** (below), **ENFORCEMENT** (wired hook+rule > recall fiche — see bullets), **FOLD vs NEW** (extend/retire before adding — see bullets).
+   - **SCOPE decides the file AND whether to mirror** — the most-missed axis:
+     - **global** (every machine/project) → `~/.claude/CLAUDE.md` **+ mirror `CONSTITUTION.md`**.
+     - **local** (THIS machine only — RIG hooks, paths, project gates) → the **« Local »** section of `~/.claude/CLAUDE.md`, **NOT mirrored** (a machine-specific fact in the shared `CONSTITUTION.md` pollutes the company kit).
+     - **project** (one RIG sub-project) → that project's `CLAUDE.md` (e.g. `<project-root>\CLAUDE.md`), never the global constitution.
+
+   Then map the kind of fix to the file (the **target-map**), at the scope decided above:
+   - **a triggered reflex / hard rule** → `CLAUDE.md` (+ `CONSTITUTION.md` **only if global**) — the reflexes loaded every session.
    - **an automatic, deterministic guardrail** → a **hook** (`hooks/*.ps1`) + its **wiring in `settings.json`** (and the package `hooks/settings-snippet.json`). This is the STRONGEST fix — code that fires on its own.
    - **a workflow/skill behavior** → the relevant `skills/<x>/SKILL.md` (or a new skill).
    - **a recall-only nuance** → a `memory/` fiche + the `MEMORY.md` index.
@@ -54,7 +60,7 @@ auto-writes its own rules (closure authority is the human; a self-editing audit 
    - **Edit on the REAL file** (read it first — never edit on a sub-agent's report), surgically, on what is NAMED. Don't redesign deliberate, hardened mechanisms in passing (that's a blind-fix — flag it as a design question to the human instead).
    - **Trim-or-replace, don't just append (kaizen 2026-06-19)** — the constitution/memory has a FINITE attention budget (loading ≠ applying). Every reflex/fiche ADDED must FOLD into an existing one (extend a clause) or RETIRE/merge a stale one — never proliferate a new number for what an existing reflex already frames. A growing rule-count dilutes attention to ALL rules; prefer one tight clause over a new reflex.
    - **VERIFY each edited hook out-of-model** via `~/.claude/hooks/test-hooks.ps1` (per hook: parses, fires on the right input, SILENT on the negative control — it catches a closure hook gone fail-open). Extend its fixtures when you add/edit a hook, and add a `check: powershell -NoProfile -File <…>\hooks\test-hooks.ps1` line to the RUN so closure re-runs it. Never break the closure-authority hooks.
-   - **Propagate**: `~/Desktop/Autowin/sync-kit.ps1` (live→package) after editing any live skill/ENGINE/hook/output-style; a NEW file (skill/hook) must also be ADDED to the sync-kit manifest + the README install steps (the manifest is a fixed list — new items are silently missed otherwise).
+   - **Propagate**: run `sync-kit.ps1` from your local Autowin clone (live→package) after editing any live skill/ENGINE/hook/output-style; a NEW file (skill/hook) must also be ADDED to the sync-kit manifest + the README install steps (the manifest is a fixed list — new items are silently missed otherwise).
    - **Close the loop**: append the mandatory JSONL line to `~/.claude/kaizen-treated.jsonl` (schema in **Output**).
 
 ## Output
@@ -62,9 +68,9 @@ The deliverable is the PROPOSE table (presented in PLAIN words) → on human-OK,
 
 **PROPOSE table** — ranked, one row per consolidated blind spot:
 
-| blind spot | anchor | severity | proposed rule | integration point |
-|---|---|---|---|---|
-| what a single specialist would miss | exact quote + line from the transcript | sev | the rule to install | hook / CLAUDE.md hard-rule / memory / just-known |
+| blind spot | anchor | severity | proposed rule | integration point | why here (scope) |
+|---|---|---|---|---|---|
+| what a single specialist would miss | exact quote + line from the transcript | sev | the rule to install | hook / CLAUDE.md hard-rule / memory / just-known | global+mirror / local-only / project — + the one-line reason |
 
 **Mandatory `kaizen-treated.jsonl` schema** — append ONE line to `~/.claude/kaizen-treated.jsonl` per treated signal:
 `{"gate":"<fix-gate|anti-flaky|stop>","treatedCount":<count at treatment>,"ts":"<iso>","note":"<what changed>"}`

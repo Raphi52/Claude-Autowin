@@ -62,7 +62,7 @@ closure (foundation §2-3).
   *Approaches*: MVP · robust · perf · lean · reuse · creative · cost · UX · convention · contrarian.
   *Improvement candidates*: grep-markers families AND stream-reading AND **bold/ambition lenses** (10x-not-10% · cross-discipline transfer · remove-the-biggest-constraint · fuse-two-parts · scale ×1000 · "if you rebuilt this today" · **anchored-ambition** = read ONLY the target's central goal, ask for the 10x of THAT goal — creative AND on-target, distinct from the blind clean-room) AND (relevance-gated) web-anchored prior-art (external tools/techniques mapped onto the target, CITED — scout default mode). Search for what EXISTS before
   proposing, cite the facts; output CONCRETE-EXTREME (`Dupont,"Le Grand"\nSARL`) — abstractions are rejected on receipt. **Loop-until-dry**: each turn receives what was already found ("NEW only"); stop at 2 dry turns OR cap
-  (~12 candidates / ~10 turns, log what was cut). The **bold/ambition arm loops to its OWN dry-round (separate cap + reserved output slots)** — else cheap incremental fixes saturate the shared cap before the hard/creative ideas emerge (the incremental trap, generator side). **Dedup by core-idea** before scoring. Exclusive resources
+  (~12 candidates / ~10 turns, log what was cut). The **bold/ambition arm loops to its OWN dry-round (separate cap + reserved output slots)** — else cheap incremental fixes saturate the shared cap before the hard/creative ideas emerge (the incremental trap, generator side). **The bold arm is a DISTINCT pass run CLEAN-ROOM** — do NOT derive it from the target's TODOs/limits (that yields "complete-the-planned" candidates, NOT divergence); **SELF-GATE before finalizing: if every bold 🆕 merely extends something already named in the target, you did NOT diverge — re-run forcing each named lens (10x / anchored-ambition / rebuild-today) to BREAK a premise.** (Listing the lenses ≠ executing them — a fresh run defaults to TODO-reading unless this gate bites; lived 2026-06-30.) **Dedup by core-idea** before scoring. Exclusive resources
   (build/bench/DB/port): one owner only — isolate or serialize.
 - **Two /100 scales, never merged**: **impact** (80-100 = changes the NATURE → surfaced unconditionally ·
   50-79 strong constraint · 30-49 useful · <30 drop) ⟂ **autonomy-confidence** (measured AFTER research:
@@ -79,7 +79,7 @@ closure (foundation §2-3).
 - **⚓ Anti-fixation** (applied by the gate at closure, foundation §2): no decision committed without **≥3
   genuinely distinct scored options** (straw options = a defect to flag in review) — disarmed in
   disposable. Annotated at write-time, blocking at closure.
-- **Schema `gg-1`** (validated ON RECEIPT; *absent* ≠ *present-but-non-conforming*; rejected on version-skew):
+- **Schema `gg-1`** (INTERNAL generator output, model-side only — never emitted in a skill's final user-facing result, nor machine-validated by any hook; "validated ON RECEIPT" = the consuming step's own check: *absent* ≠ *present-but-non-conforming*, rejected on version-skew):
   `{"schema_version":"gg-1","candidates":[{"id","lens","content","impact","autonomy_confidence","cited_fact","strictly_private","proposed_assumption"}]}`
 
 ## Ch.2 — JUDGE *(used during `judge`; the canary is only used in critical)*

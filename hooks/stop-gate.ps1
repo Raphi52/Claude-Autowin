@@ -250,6 +250,10 @@ foreach ($d in $wsDirs) {
         $inBesoin = $false
         foreach ($ln in $all) {
             if ($ln -match '^\s*##\s+Besoin\b') { $inBesoin = $true; continue }
+            # FAIL-CLOSED scope: close ONLY on a level-2 `## ` heading, NOT on a `###` sub-heading -> a `- [ ]`
+            # under a `### sub-section` inside ## Besoin is STILL scanned as a DoD box (a real unchecked exit
+            # condition blocks even if nested). Closing on `###` would let a model EVADE the DoD block by nesting
+            # its real boxes under a `###` (judge Guardian 2026-06-30). Non-DoD lists use prose/`-`, not `- [ ]`.
             if ($inBesoin -and $ln -match '^\s*##\s') { $inBesoin = $false }
             if ($inBesoin -and $ln -match '^\s*[-*+]\s*\[\s*\]\s*[^<\s]') {
                 $failures += ('DoD item NON TENU (case non cochee) dans ## Besoin: ' + $ln.Trim())
@@ -263,8 +267,12 @@ foreach ($d in $wsDirs) {
         $stamp = '[' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + '] GATE-VERIFIED'
         # If RUN.md does not end with a newline, Add-Content GLUES the tag to the last line ->
         # the marker (anchor ^...$) is no longer recognized on the next pass. Prefix a newline if needed.
-        $rawRun = ''; try { $rawRun = [IO.File]::ReadAllText($run) } catch { }
-        $lead = if ($rawRun.Length -gt 0 -and $rawRun[-1] -ne "`n") { "`r`n" } else { '' }
+        # Read-back to decide the newline lead. On read FAILURE -> default to PREPEND a newline (SAFE: a spurious
+        # blank line never breaks the GATE-VERIFIED anchor, but a stamp GLUED to the last line does -> would
+        # re-verify forever). Skip the lead ONLY when a trailing newline is positively confirmed. (kit-coherence N1-B1)
+        $rawRun = $null
+        try { $rawRun = [IO.File]::ReadAllText($run) } catch { [Console]::Error.WriteLine('stop-gate: stamp read-back failed for ' + $run + ' -- newline-lead defaulted (not silent)') }
+        $lead = if ($null -ne $rawRun -and $rawRun.Length -gt 0 -and $rawRun[-1] -eq "`n") { '' } else { "`r`n" }
         Add-Content -Path $run -Value ($lead + $stamp) -Encoding utf8
     }
 }

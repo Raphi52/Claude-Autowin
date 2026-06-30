@@ -96,8 +96,10 @@ X") is **scout's job, not a question to the user** — derive it, don't ask.
     ~XM tokens cumulative, last delta −Y pts — relaunch?" (a 2nd go clears it). Cost must be VISIBLE for the
     human to hold real stop-authority; never self-mute it ("without insisting"). **Git carve-out (kaizen
     2026-06-19)**: `git commit`/`push` is a greenlit class but the ONLY one ENFORCED out-of-model —
-    `git-auth-gate.ps1` denies it unless the user granted THIS session (says commit/push, or
-    `AUTOWIN_GIT_AUTH=1`); a session "push-as-you-go" grant then holds (no per-push re-ask), else it blocks.
+    `git-auth-gate.ps1` denies it unless the user granted THIS session (says commit/push, clicks a QCM option
+    that authorizes it — the gate scans the transcript at PreToolUse since a QCM click has no `prompt` field,
+    kaizen 2026-06-26 — or `AUTOWIN_GIT_AUTH=1`); a session "push-as-you-go" grant then holds (no per-push
+    re-ask), else it blocks.
 13. **THE MOMENT a task is read-heavy** (>3 files/queries: explore a repo, sweep sources) → delegate it to a
     sub-agent and take its CONCLUSION, not the raw dumps — cleaner context + faster. (Distinct from reflex 4,
     which parallelizes N *independent* tasks; this is ONE heavy-read task.)
