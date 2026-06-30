@@ -70,7 +70,7 @@ After `## Besoin` is written, decide: does the framed need leave a real, unsettl
 
 **1. Generate** by approach-lenses (ENGINE ch.1: MVP · robust · perf · lean · reuse-existing · creative · cost-first · UX-first · convention · contrarian), loop-until-dry, **dedup by core idea**.
 
-**2. Score** in RANKING mode (ENGINE ch.2): typed criteria, fidelity as the eliminatory veto (~0 disqualifies), weighted sum post-veto; 2 decorrelated draws on subjective dims, median-then-MIN.
+**2. Score** in RANKING mode (ENGINE ch.2): typed criteria, fidelity as the eliminatory veto (~0 disqualifies), weighted sum post-veto; 2 decorrelated draws on subjective dims, median-then-MIN. (This weighted sum is the INTERNAL compute of the order — NOT what's shown: the DISPLAY to the human surfaces Impact ⊥ Effort as separate axes, never a single collapsed score — ENGINE Ch.1 display rule, see step 5.)
 
 **2b. Adaptive deepen-vs-widen** *(AB-MCTS-inspired pilot — a score-driven DECISION over the EXISTING actions of steps 1 & 3; reuses step 2's `gg-1` scores, NO new scorer; **`disposable` → skip this step**)*: AFTER step 2 is complete, read the score distribution and make ONE routing decision before finalizing — **clear dominant top → STOP** (the net-new bit: early-exit straight to step 3, no extra round) · **top promising but rough → DEEPEN**: route through step 3's grafts (don't shortcut to finalize) · **scores low / clustered, no winner → WIDEN**: re-enter step 1's loop-until-dry with MORE divergent lenses (its ~12-candidate / 2-dry-round caps still bind). DEEPEN/WIDEN add NO new action — they route into steps 3/1; only the STOP early-exit is new. **Cap ≤1 extra round** — step 1 (WIDEN) OR step 3 (DEEPEN), not chained. *(worked example: scores 88/52/49 → dominant top → STOP · 70/66/61 → clustered, no winner → WIDEN · 84/80/55 → top rough vs strong runner-up → DEEPEN.)* Thresholds (dominant / clustered) = judgment — the score guides, it doesn't gate. *Caveat: superiority over plain one-shot is a HYPOTHESIS, unproven (a loop-policy's value is hard to measure out-of-model).*
 
@@ -78,7 +78,7 @@ After `## Besoin` is written, decide: does the framed need leave a real, unsettl
 
 **4. Blind-spot check across options** — a need-case that NONE of the top-K covers = a coverage gap, not a ranking detail. Note it in `## Options` (label `Uncovered case`); if it implies a genuinely distinct option, add it before finalizing the ranking — don't let the leaderboard hide it.
 
-**5. Human decides.** Present the ranked top and let them pick. Only on an explicit "decide for me" do you pick the top-ranked and state why.
+**5. Human decides.** Present the ranked top **with Impact ⊥ Effort surfaced as two separate axes** (ENGINE Ch.1 display rule — never a single collapsed score; a high-impact option stays visible even when costly) and let them pick. Only on an explicit "decide for me" do you pick the top-ranked and state why.
 
 **6. Write `## Options`** — ≥3 scored, genuinely distinct options (the stop-gate's ⚓ ANTI-FIXATION will verify this before any engaged decision; straw options are a defect) + a `Décision:` line.
 
