@@ -8,6 +8,26 @@ workstation. **Current version: see `VERSION` (this kit = 3.6.0).**
 
 ---
 
+## 📦 Get / refresh the kit — it lives in a git repo
+
+The kit is distributed as a git repository: **https://github.com/Raphi52/Claude-Autowin**
+
+**First time** — clone it:
+```
+git clone https://github.com/Raphi52/Claude-Autowin.git
+cd Claude-Autowin
+```
+
+**Already cloned** — pull the latest before you update:
+```
+git pull
+```
+
+Then open **Claude Code** inside that folder and follow the matching path below —
+**UPDATE** if a previous version is already installed on this machine, **INSTALLATION** otherwise.
+
+---
+
 ## 🔄 UPDATE — already have a previous version? — just tell your Claude: "update the kit"
 
 > Claude: if `%USERPROFILE%\.claude\skills\frame` (or older-generation skills like `define-need` /
