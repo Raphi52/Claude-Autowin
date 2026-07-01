@@ -107,6 +107,8 @@ function MkRun($content) { New-Item -ItemType Directory -Force -Path $d | Out-Nu
 $sg = J @{ session_id = $sid; cwd = $tmp }
 MkRun "status: open`nsession: $sid"
 Check 'stop-gate FIRE  (status open)' ((Run 'stop-gate.ps1' $sg) -match 'block')
+MkRun "status: red`nsession: $sid"
+Check 'stop-gate FIRE  (status red)' ((Run 'stop-gate.ps1' $sg) -match 'block')
 MkRun "status: open`nsession: $sid`ngate: off"
 Check 'stop-gate SILENT(gate off)' (-not ((Run 'stop-gate.ps1' $sg) -match 'block'))
 MkRun "status: open`nsession: $sid`ngate: off   <!-- justification opt-out -->"
@@ -225,6 +227,9 @@ Check 'judge-nudge FIRE (.md doc deliverable nudge encore, flag frais)' ((Run 'j
 Remove-Item $jnflag -EA SilentlyContinue
 $pc = Join-Path $tmp "Audit\workspaces\$sid\pc-workspace"; New-Item -ItemType Directory -Force $pc | Out-Null; Set-Content (Join-Path $pc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
 Check 'precompact FIRE (open RUN -> systemMessage)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
+Set-Content (Join-Path $pc 'RUN.md') "status: red`nsession: $sid" -Encoding utf8
+Check 'precompact FIRE (RED RUN -> systemMessage, aligne stop-gate qui bloque red)' ((Run 'precompact-runcheck.ps1' (J @{ session_id = $sid; cwd = $tmp })) -match 'systemMessage')
+Set-Content (Join-Path $pc 'RUN.md') "status: open`nsession: $sid" -Encoding utf8
 Check 'precompact SILENT (no session dir)' (-not ((Run 'precompact-runcheck.ps1' (J @{ session_id = 'none-xyz'; cwd = $tmp })) -match 'systemMessage'))
 Check 'thinking-mode FIRE (? prefix)' ((Run 'thinking-mode.ps1' (J @{ prompt = '? je reflechis' })) -match 'THINKING MODE')
 Check 'thinking-mode SILENT (normal prompt)' (-not ((Run 'thinking-mode.ps1' (J @{ prompt = 'cree le module' })) -match 'THINKING MODE'))

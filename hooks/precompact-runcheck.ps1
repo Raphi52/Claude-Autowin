@@ -17,8 +17,10 @@ foreach ($d in $dirs) {
     if (Test-Path $d) {
         # Scan the first 14 lines (aligned with stop-gate's header window) — a `status:` pushed past line 3 by a
         # preamble/comment was previously MISSED here while stop-gate still blocked it (kit-coherence N3).
-        $open += @(Get-ChildItem $d -Filter RUN.md -Recurse -ErrorAction SilentlyContinue | Where-Object { (Get-Content $_.FullName -TotalCount 14) -match 'status:\s*open' })
+        # Warn on BOTH open AND red (stop-gate.ps1 blocks both) — a `red` run losing its ## Reprise at compact
+        # leaves the next turn blocked with no context to resolve it (candidat scout #13, 2026-07-01).
+        $open += @(Get-ChildItem $d -Filter RUN.md -Recurse -ErrorAction SilentlyContinue | Where-Object { (Get-Content $_.FullName -TotalCount 14) -match 'status:\s*(open|red)' })
     }
 }
 $open = @($open | Sort-Object FullName -Unique)
-if ($open.Count) { @{ systemMessage = ('PreCompact: ' + $open.Count + ' open RUN.md in THIS session -- update ## Reprise/Journal before losing context.') } | ConvertTo-Json -Compress }
+if ($open.Count) { @{ systemMessage = ('PreCompact: ' + $open.Count + ' open/red RUN.md in THIS session -- update ## Reprise/Journal before losing context.') } | ConvertTo-Json -Compress }
