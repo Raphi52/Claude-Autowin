@@ -81,6 +81,7 @@ closure (foundation §2-3).
   disposable. Annotated at write-time, blocking at closure.
 - **Schema `gg-1`** (INTERNAL generator output, model-side only — never emitted in a skill's final user-facing result, nor machine-validated by any hook; "validated ON RECEIPT" = the consuming step's own check: *absent* ≠ *present-but-non-conforming*, rejected on version-skew):
   `{"schema_version":"gg-1","candidates":[{"id","lens","content","impact","autonomy_confidence","cited_fact","strictly_private","proposed_assumption"}]}`
+  *Few-shot `content` — ✅ concret/ancré: «`auth.ts:88` : le retry ne borne pas le backoff → boucle serrée sur un 429» · ❌ vague (rejeté à réception): «améliorer la robustesse réseau».*
 
 ## Ch.2 — JUDGE *(used during `judge`; the canary is only used in critical)*
 
@@ -98,7 +99,7 @@ self-prove: freshness (artifact > action) + non-vacuity (N tests >0, log non-emp
 **Scoring**: first remove the objectifiable (exit, counts, pixel-diff → deterministic). [F] = 1 judge,
 counterexample or 100. [S] = hostile expert attack then score; **2 decorrelated draws per NAMED ORTHOGONAL LENS** (draw A and B receive
 distinct lenses from a per-dimension list — e.g. Faithful A="trace each claim→need criterion" / B="find a case of the need not covered" — NOT just "different framing"), **median-then-MIN**; spread >20 → 3rd draw MIN; spread of all 3 draws still >15 →
-**INDETERMINATE + ask** — never a silent green. **Variance-gate (kaizen 2026-06-18)**: a /100 from a
+**INDETERMINATE + ask** — never a silent green. **Ask BEFORE the 1st draw** if a missing fact would move the note >20 pts (grounding-poor case) — cheaper than burning 3 divergent draws to reach INDETERMINATE. **Variance-gate (kaizen 2026-06-18)**: a /100 from a
 SINGLE model is a JUDGMENT, not a measurement — same-model draws on ONE artifact that diverge by >20
 (lived: 97/72, 96/61/58) prove the instrument unreliable → report **the spread**, never a MIN dressed up as a clean
 number; surface the score as a **coarse band** (keep/maybe/drop) + provenance "self-judged, not measured", not a 2-digit false precision.
@@ -108,7 +109,8 @@ carried as a visible **RISK NOTE** (never dressed up as green). **RANKING mode**
 N valid `je-1` JSON; missing/invalid → 1 retry → else dimension **INVALID, caps and blocks**. A REAL major
 that is fixed leaves a **permanent anti-regression guard** (`check:` in RUN.md / replayable repro) —
 otherwise it can return unaudited (anti-whack-a-mole: a killed defect does not resurrect).
-Schema: `{"schema_version":"je-1","dimension","note","interval","unstable","artifact_based","defects":[{"severity","nature":"fixable|intrinsic|wont_fix","type","description","to_reach_100"}]}`
+Schema: `{"schema_version":"je-1","dimension","note","interval","unstable","unstable_reason","artifact_based","defects":[{"severity","nature":"fixable|intrinsic|wont_fix","type","description","to_reach_100"}]}` (`unstable_reason` non vide si `unstable:true` — preuve-manquante vs critère-mal-défini — sinon le consommateur re-lit tout le journal).
+*Few-shot `defects[].description` — ✅ «ligne 42 : pas de null-guard sur `user.id` → TypeError sur appel anonyme» · ❌ «le code est fragile» (rejeté : ni lieu ni déclencheur nommé).*
 
 **The loop**: panel ∝ regime (foundation table); re-vote at each iteration (re-audit, not re-reading).
 **Cost (outside critical)**: ESCALATING panel (core of 2 = Faithful + Real-effect, escalates on signal — major
